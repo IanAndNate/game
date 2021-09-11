@@ -10,8 +10,10 @@ app.use(express.static(`node_modules`));
 const server = createServer(app);
 const io = new Server(server);
 
-server.listen(80, () => {
-    console.log('listening on *:80');
+const port = process.env.PORT || 3000;
+
+server.listen(port, () => {
+    console.log(`listening on *:${port}`);
 });
 
 io.on('connection', (socket) => {
