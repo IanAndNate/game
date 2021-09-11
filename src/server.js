@@ -10,8 +10,8 @@ app.use(express.static(`node_modules`));
 const server = createServer(app);
 const io = new Server(server);
 
-server.listen(3000, () => {
-    console.log('listening on *:3000');
+server.listen(80, () => {
+    console.log('listening on *:80');
 });
 
 io.on('connection', (socket) => {
