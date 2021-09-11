@@ -1,6 +1,11 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import fs from 'fs';
+
+const log = (entry) => {
+    fs.appendFileSync('/tmp/sample-app.log', new Date().toISOString() + ' - ' + entry + '\n');
+};
 
 const app = express();
 
@@ -13,12 +18,12 @@ const io = new Server(server);
 const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
-    console.log(`listening on *:${port}`);
+    log(`listening on *:${port}`);
 });
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    log('a user connected');
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        log('user disconnected');
     });
 });
