@@ -9,8 +9,7 @@ const log = (entry) => {
 
 const app = express();
 
-app.use(express.static(`src/static`));
-app.use(express.static(`node_modules`));
+app.use(express.static(`static`));
 
 const server = createServer(app);
 const io = new Server(server);
