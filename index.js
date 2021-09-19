@@ -21,4 +21,14 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });
+
+    socket.on('keydown', (msg) => {
+        console.log('message: ' + msg);
+        socket.emit('keydown broadcast', msg);
+    });
+
+    socket.on('keyup', (msg) => {
+        console.log('message: ' + msg);
+        socket.emit('keyup broadcast', msg);
+    });
 });

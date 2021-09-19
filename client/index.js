@@ -1,61 +1,23 @@
 import { io } from "socket.io-client";
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
+import * as Tone from 'tone';
 
-function Messages({ socket }) {
-    const [messages, setMessages] = useState({});
-
-    useEffect(() => {
-        const messageListener = (message) => {
-            setMessages((prevMessages) => {
-                const newMessages = {...prevMessages};
-                newMessages[message.id] = message;
-                return newMessages;
-            });
-        };
-
-        const deleteMessageListener = (messageID) => {
-            setMessages((prevMessages) => {
-                const newMessages = {...prevMessages};
-                delete newMessages[messageID];
-                return newMessages;
-            });
-        };
-
-        socket.on('message', messageListener);
-        socket.on('deleteMessage', deleteMessageListener);
-        socket.emit('getMessages');
-
-        return () => {
-            socket.off('message', messageListener);
-            socket.off('deleteMessage', deleteMessageListener);
-        };
-    }, [socket]);
-
-    return (
-        <div className="message-list">
-            {[...Object.values(messages)]
-                .sort((a, b) => a.time - b.time)
-                .map((message) => (
-                    <div
-                        key={message.id}
-                        className="message-container"
-                        title={`Sent at ${new Date(message.time).toLocaleTimeString()}`}
-                    >
-                        <span className="user">{message.user.name}:</span>
-                        <span className="message">{message.value}</span>
-                        <span className="date">{new Date(message.time).toLocaleTimeString()}</span>
-                    </div>
-                ))
-            }
-        </div>
-    );
+const KEY_MAPPINGS = {
+    'a': 'A4',
+    's': 'B4',
+    'd': 'C4',
+    'f': 'D4',
+    'g': 'E4',
+    'h': 'F4',
+    'j': 'G4',
 }
-
-export default Messages;
 
 function App() {
     const [socket, setSocket] = useState(null);
+    const [keysDown, setKeysDown] = useState({});
+    const [toneStarted, setToneStarted] = useState(false);
+    const [synth, setSynth] = useState(null);
 
     useEffect(() => {
         const newSocket = io();
@@ -63,20 +25,59 @@ function App() {
         return () => newSocket.close();
     }, [setSocket]);
 
-    return (
-        <div className="App">
-            <header className="app-header">
-                React Chat
-            </header>
-            { socket ? (
-                <div className="chat-container">
-                    <Messages socket={socket} />
-                </div>
-            ) : (
-                <div>Not Connected</div>
-            )}
-        </div>
-    );
+    useEffect(() => {
+        if (socket) {
+            socket.on('keydown broadcast', (e) => {
+                console.log(e);
+                if (synth) {
+                    synth.triggerAttack(KEY_MAPPINGS[e], Tone.now());
+                }
+            })
+            socket.on('keyup broadcast', (e) => {
+                console.log(e);
+                synth.triggerRelease([KEY_MAPPINGS[e]], Tone.now());
+            })
+        }
+    }, [socket]);
+
+    useEffect(() => {
+        // Synth setup;
+        setSynth(new Tone.PolySynth(Tone.Synth).toDestination());
+    }, [toneStarted, setSynth])
+
+    const keyDownHandler = useCallback((e) => {
+        if (!toneStarted) {
+            Tone.start().then(() => setToneStarted(true));
+
+        }
+        if (socket) {
+            if (!keysDown[e.key]) {
+                socket.emit('keydown', e.key);
+                keysDown[e.key] = true;
+                setKeysDown(keysDown);
+            }
+        }
+    }, [socket, keysDown, setKeysDown]);
+
+    const keyUpHandler = useCallback((e) => {
+        if (socket) {
+            socket.emit('keyup', e.key);
+            delete keysDown[e.key];
+            setKeysDown(keysDown);
+        }
+    }, [socket, keysDown, setKeysDown]);
+
+    useEffect(() => {
+        window.addEventListener('keydown', keyDownHandler);
+        window.addEventListener('keyup', keyUpHandler);
+
+        return () => {
+            window.removeEventListener('keydown', keyDownHandler);
+            window.removeEventListener('keyup', keyUpHandler);
+        }
+    }, [keyDownHandler, keyUpHandler]);
+
+    return <>Oh hai</>;
 }
 
 
