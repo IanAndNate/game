@@ -1,7 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import fs from 'fs';
 
 const app = express();
 
@@ -24,11 +23,11 @@ io.on('connection', (socket) => {
 
     socket.on('keydown', (msg) => {
         console.log('message: ' + msg);
-        socket.emit('keydown broadcast', msg);
+        io.emit('keydown broadcast', msg);
     });
 
     socket.on('keyup', (msg) => {
         console.log('message: ' + msg);
-        socket.emit('keyup broadcast', msg);
+        io.emit('keyup broadcast', msg);
     });
 });
