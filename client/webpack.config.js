@@ -8,7 +8,7 @@ const config = {
         './index.js'
     ],
     output: {
-        path: path.resolve(__dirname, '../server/static'),
+        path: path.resolve(__dirname, '../static'),
         filename: 'bundle.[hash].js'
     },
     module: {
@@ -35,7 +35,7 @@ const config = {
     plugins: [
         new HtmlWebpackPlugin ({
             inject: true,
-            template: '../server/static/index.html'
+            template: '../static/index.html'
         })
     ]
 };

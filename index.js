@@ -11,12 +11,12 @@ const app = express();
 
 app.use(express.static(`static`));
 
-const server = createServer(app);
-const io = new Server(server);
+const index = createServer(app);
+const io = new Server(index);
 
 const port = process.env.PORT || 3000;
 
-server.listen(port, () => {
+index.listen(port, () => {
     log(`listening on *:${port}`);
 });
 
