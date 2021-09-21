@@ -1,23 +1,19 @@
-import { io } from "socket.io-client";
+import {io} from "socket.io-client";
 import React, {useCallback, useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
 import * as Tone from 'tone';
+import {BrowserRouter, Route, Switch} from "react-router-dom";
 
-const KEY_MAPPINGS = {
-    'a': 'A4',
-    's': 'B4',
-    'd': 'C4',
-    'f': 'D4',
-    'g': 'E4',
-    'h': 'F4',
-    'j': 'G4',
+const Welcome = () => {
+    return <>Welcome</>
 }
 
-function App() {
+const Game = ({ match: { params: { gameId }} }) => {
     const [socket, setSocket] = useState(null);
     const [keysDown, setKeysDown] = useState({});
     const [toneStarted, setToneStarted] = useState(false);
     const [synth, setSynth] = useState(null);
+    const [piece, setPiece] = useState(null);
 
     useEffect(() => {
         const newSocket = io();
@@ -30,15 +26,18 @@ function App() {
             socket.on('keydown broadcast', (e) => {
                 console.log(e);
                 if (synth) {
-                    synth.triggerAttack(KEY_MAPPINGS[e], Tone.now());
+                    synth.triggerAttack(e, Tone.now());
                 }
-            })
+            });
             socket.on('keyup broadcast', (e) => {
                 console.log(e);
-                synth.triggerRelease([KEY_MAPPINGS[e]], Tone.now());
-            })
+                synth.triggerRelease([e], Tone.now());
+            });
+            socket.on('start game', (piece) => {
+                setPiece(piece);
+            });
         }
-    }, [socket]);
+    }, [socket, setPiece]);
 
     useEffect(() => {
         // Synth setup;
@@ -77,9 +76,28 @@ function App() {
         }
     }, [keyDownHandler, keyUpHandler]);
 
-    return <>Oh hai</>;
+    const onStartHandler = useCallback(() => {
+        if (socket) {
+            socket.emit('request start game');
+        }
+    }, [socket]);
+
+    return <><button onClick={onStartHandler}>Start</button>{piece && piece.map(({ key }) => <span>{key}</span>)}</>
+}
+
+function App() {
+    return <BrowserRouter>
+        <Switch>
+            <Route exact path="/">
+                <Welcome/>
+            </Route>
+            <Route exact path="/game/:gameId" render={routeProps => (
+                <Game {...routeProps} />
+            )}/>
+        </Switch>
+    </BrowserRouter>;
 }
 
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(<App/>, document.getElementById('root'));
 

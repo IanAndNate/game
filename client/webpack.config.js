@@ -9,7 +9,8 @@ const config = {
     ],
     output: {
         path: path.resolve(__dirname, '../static'),
-        filename: 'bundle.[hash].js'
+        filename: 'bundle.[hash].js',
+        publicPath: '/'
     },
     module: {
         rules: [
@@ -30,12 +31,13 @@ const config = {
         }
     },
     devServer: {
-        contentBase: './dist'
+        contentBase: '../static'
     },
     plugins: [
         new HtmlWebpackPlugin ({
             inject: true,
-            template: '../static/index.html'
+            template: './index.html',
+            filename: '../static/index.html'
         })
     ]
 };
