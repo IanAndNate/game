@@ -84,9 +84,15 @@ io.on('connection', (socket) => {
     socket.on('request start game', () => {
         let numbersArray = createArrayOfNumber(0, KEYBOARD_KEYS.length - 1);
         remapped = uniqueNotes.map((note) => {
-            let randomIndex = getRandomNumber(0, KEYBOARD_KEYS.length - 1);
-            let randomNumber = numbersArray[randomIndex];
-            numbersArray.splice(randomIndex, 1);
+            let randomNumber;
+            let randomIndex;
+            while (typeof randomNumber === 'undefined') {
+                randomIndex = getRandomNumber(0, KEYBOARD_KEYS.length - 1);
+                randomNumber = numbersArray[randomIndex];
+            }
+            if (randomIndex) {
+                numbersArray.splice(randomIndex, 1);
+            }
             return {
                 note: note.note,
                 key: KEYBOARD_KEYS[randomNumber]
