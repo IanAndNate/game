@@ -1,10 +1,21 @@
 import express from 'express';
 import {createServer} from 'http';
 import {Server} from 'socket.io';
+import midiParser from 'midi-parser-js';
+import { readFile } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
 
 app.use(express.static(`static`));
+const rooms = [];
+app.get('/new', (req, res) => {
+    const roomId = uuidv4();
+    const newRoom = { roomId }
+    rooms.push(newRoom);
+    res.send({ roomId: newRoom.roomId });
+})
+
 app.get('*', function (req, res) {
     res.sendFile('static/index.html', {root: '.'});
 });
@@ -52,7 +63,21 @@ const pieces = [
         ],
         title: "Mary had a little lamb"
     }
-]
+];
+
+readFile("chopin-ballade1.mid", 'base64', function (err,data) {
+    // Parse the obtainer base64 string ...
+    var midiArray = midiParser.parse(data);
+    // done!
+    console.log(midiArray);
+    midiArray.track.forEach((track) => {
+        track.event.filter((e) => {
+            return e.type === 9 || e.type === 8
+        }).forEach((e) => {
+            console.log(e);
+        });
+    });
+});
 
 const KEYBOARD_KEYS = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m'];
 let remapped = [];
@@ -81,6 +106,10 @@ io.on('connection', (socket) => {
         players = players.filter((player) => player !== socket.id);
     });
 
+    socket.on('join room', (roomId) => {
+        socket.join(roomId);
+    });
+
     socket.on('request start game', () => {
         let numbersArray = createArrayOfNumber(0, KEYBOARD_KEYS.length - 1);
         remapped = uniqueNotes.map((note) => {
@@ -98,20 +127,32 @@ io.on('connection', (socket) => {
                 key: KEYBOARD_KEYS[randomNumber]
             }
         });
-        io.emit('start game', pieces[0].notes.map(({ note }) => { return { key: remapped.find((mapped) => mapped.note === note).key } }));
+        socket.rooms.forEach((roomId) => {
+            if (roomId !== socket.id) {
+                io.to(roomId).emit('start game', pieces[0].notes.map(({ note }) => { return { key: remapped.find((mapped) => mapped.note === note).key } }));
+            }
+        });
     });
 
     socket.on('keydown', (msg) => {
         const mapped = remapped && remapped.find(({ key }) => key === msg);
         if (mapped) {
-            io.emit('keydown broadcast', mapped.note);
+            socket.rooms.forEach((roomId) => {
+                if (roomId !== socket.id) {
+                    io.to(roomId).emit('keydown broadcast', mapped.note);
+                }
+            });
         }
     });
 
     socket.on('keyup', (msg) => {
         const mapped = remapped && remapped.find(({ key }) => key === msg);
         if (mapped) {
-            io.emit('keyup broadcast', mapped.note);
+            socket.rooms.forEach((roomId) => {
+                if (roomId !== socket.id) {
+                    io.to(roomId).emit('keyup broadcast', mapped.note);
+                }
+            });
         }
     });
 });

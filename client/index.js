@@ -2,13 +2,25 @@ import {io} from "socket.io-client";
 import React, {useCallback, useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
 import * as Tone from 'tone';
-import {BrowserRouter, Route, Switch} from "react-router-dom";
+import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 
 const Welcome = () => {
-    return <>Welcome</>
+
+    let history = useHistory();
+
+    const onNewGameClick = useCallback(async (e) => {
+        const roomIdResponse = await fetch('/new');
+        const { roomId } = await roomIdResponse.json();
+        history.push(`/game/${roomId}`);
+    }, [])
+
+    return <>
+        Welcome
+        <button onClick={onNewGameClick}>New game</button>
+    </>
 }
 
-const Game = ({ match: { params: { gameId }} }) => {
+const Game = ({ match: { params: { roomId }} }) => {
     const [socket, setSocket] = useState(null);
     const [keysDown, setKeysDown] = useState({});
     const [toneStarted, setToneStarted] = useState(false);
@@ -38,6 +50,12 @@ const Game = ({ match: { params: { gameId }} }) => {
             });
         }
     }, [socket, setPiece]);
+
+    useEffect(() => {
+        if (socket) {
+            socket.emit('join room', roomId);
+        }
+    }, [socket]);
 
     useEffect(() => {
         // Synth setup;
@@ -82,7 +100,7 @@ const Game = ({ match: { params: { gameId }} }) => {
         }
     }, [socket]);
 
-    return <><button onClick={onStartHandler}>Start</button>{piece && piece.map(({ key }) => <span>{key}</span>)}</>
+    return <><button onClick={onStartHandler}>Start</button><input type={'text'}/>{piece && piece.map(({ key }) => <span>{key}</span>)}</>
 }
 
 function App() {
@@ -91,7 +109,7 @@ function App() {
             <Route exact path="/">
                 <Welcome/>
             </Route>
-            <Route exact path="/game/:gameId" render={routeProps => (
+            <Route exact path="/game/:roomId" render={routeProps => (
                 <Game {...routeProps} />
             )}/>
         </Switch>
