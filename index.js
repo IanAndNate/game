@@ -2,8 +2,8 @@ import express from 'express';
 import {createServer} from 'http';
 import {Server} from 'socket.io';
 import midiParser from 'midi-parser-js';
-import { readFile } from 'fs';
-import { v4 as uuidv4 } from 'uuid';
+import {readFile} from 'fs';
+import {v4 as uuidv4} from 'uuid';
 
 const app = express();
 
@@ -11,9 +11,9 @@ app.use(express.static(`static`));
 const rooms = [];
 app.get('/new', (req, res) => {
     const roomId = uuidv4();
-    const newRoom = { roomId }
+    const newRoom = {roomId}
     rooms.push(newRoom);
-    res.send({ roomId: newRoom.roomId });
+    res.send({roomId: newRoom.roomId});
 })
 
 app.get('*', function (req, res) {
@@ -65,7 +65,7 @@ const pieces = [
     }
 ];
 
-readFile("chopin-ballade1.mid", 'base64', function (err,data) {
+readFile("chopin-ballade1.mid", 'base64', function (err, data) {
     // Parse the obtainer base64 string ...
     var midiArray = midiParser.parse(data);
     // done!
@@ -79,7 +79,7 @@ readFile("chopin-ballade1.mid", 'base64', function (err,data) {
     });
 });
 
-const KEYBOARD_KEYS = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m'];
+const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm'];
 let remapped = [];
 
 function getRandomNumber(min, max) {
@@ -87,6 +87,7 @@ function getRandomNumber(min, max) {
     let result = Math.floor(Math.random() * totalEle) + min;
     return result;
 }
+
 function createArrayOfNumber(start, end) {
     let myArray = [];
     for (let i = start; i <= end; i++) {
@@ -94,65 +95,86 @@ function createArrayOfNumber(start, end) {
     }
     return myArray;
 }
+
 const uniqueNotes = pieces[0].notes.filter((value, index, self) => {
     return self.findIndex((orig) => orig.note === value.note) === index;
 });
 
+const getRoomId = (socket) => {
+    const entries = socket.rooms.values();
+    if (entries) {
+        let room = entries.next();
+        while (room && room.value && room.value === socket.id) {
+            room = entries.next()
+        }
+        return room && room.value;
+    }
+}
+
 io.on('connection', (socket) => {
 
-    players.push(socket.id);
-
     socket.on('disconnect', () => {
-        players = players.filter((player) => player !== socket.id);
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+        if (room) {
+            room.players = room.players || [];
+            room.players = room.players.filter((id) => id === socket.id);
+        }
     });
 
     socket.on('join room', (roomId) => {
-        socket.join(roomId);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+        if (room) {
+            socket.join(roomId);
+            room.players = room.players || [];
+            room.players.push(socket.id);
+        }
     });
 
     socket.on('request start game', () => {
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+
         let numbersArray = createArrayOfNumber(0, KEYBOARD_KEYS.length - 1);
-        remapped = uniqueNotes.map((note) => {
-            let randomNumber;
-            let randomIndex;
-            while (typeof randomNumber === 'undefined') {
-                randomIndex = getRandomNumber(0, KEYBOARD_KEYS.length - 1);
-                randomNumber = numbersArray[randomIndex];
-            }
-            if (randomIndex) {
-                numbersArray.splice(randomIndex, 1);
-            }
-            return {
-                note: note.note,
-                key: KEYBOARD_KEYS[randomNumber]
-            }
-        });
-        socket.rooms.forEach((roomId) => {
-            if (roomId !== socket.id) {
-                io.to(roomId).emit('start game', pieces[0].notes.map(({ note }) => { return { key: remapped.find((mapped) => mapped.note === note).key } }));
-            }
-        });
+        if (room) {
+            room.remapped = uniqueNotes.map((note) => {
+                let randomNumber;
+                let randomIndex;
+                while (typeof randomNumber === 'undefined') {
+                    randomIndex = getRandomNumber(0, KEYBOARD_KEYS.length - 1);
+                    randomNumber = numbersArray[randomIndex];
+                }
+                if (randomIndex) {
+                    numbersArray.splice(randomIndex, 1);
+                }
+                return {
+                    note: note.note,
+                    key: KEYBOARD_KEYS[randomNumber]
+                }
+            });
+            io.to(roomId).emit('start game', pieces[0].notes.map(({note}) => {
+                return {key: room.remapped.find((mapped) => mapped.note === note).key}
+            }));
+        }
     });
 
     socket.on('keydown', (msg) => {
-        const mapped = remapped && remapped.find(({ key }) => key === msg);
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+
+        const mapped = room.remapped && room.remapped.find(({key}) => key === msg);
         if (mapped) {
-            socket.rooms.forEach((roomId) => {
-                if (roomId !== socket.id) {
-                    io.to(roomId).emit('keydown broadcast', mapped.note);
-                }
-            });
+            io.to(roomId).emit('keydown broadcast', mapped.note);
         }
     });
 
     socket.on('keyup', (msg) => {
-        const mapped = remapped && remapped.find(({ key }) => key === msg);
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+
+        const mapped = room.remapped && room.remapped.find(({key}) => key === msg);
         if (mapped) {
-            socket.rooms.forEach((roomId) => {
-                if (roomId !== socket.id) {
-                    io.to(roomId).emit('keyup broadcast', mapped.note);
-                }
-            });
+            io.to(roomId).emit('keyup broadcast', mapped.note);
         }
     });
 });
