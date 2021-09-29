@@ -100,7 +100,23 @@ const Game = ({ match: { params: { roomId }} }) => {
         }
     }, [socket]);
 
-    return <><button onClick={onStartHandler}>Start</button><input type={'text'}/>{piece && piece.map(({ key }) => <span>{key}</span>)}</>
+    return <><button onClick={onStartHandler}>Start</button><input type={'text'}/><div style={{ position: 'relative' }}>{piece && piece.map(({ key, time, duration }, i) => <span key={i} style={{ position: 'absolute', left: time * 100, width:duration * 100, backgroundColor: '#93d793', top: getPosition(key) * 40, padding: '10px', boxSizing: 'border-box' }}>{key}</span>)}</div></>
+}
+
+let nextPosition = 0;
+
+const NOTE_POSITIONS = {
+
+}
+
+const getPosition = (note) => {
+    const existing = NOTE_POSITIONS[note];
+    if (typeof existing !== 'undefined') {
+        return existing;
+    }
+    NOTE_POSITIONS[note] = nextPosition;
+    nextPosition++;
+    return NOTE_POSITIONS[note];
 }
 
 function App() {

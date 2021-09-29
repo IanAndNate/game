@@ -65,22 +65,30 @@ const pieces = [
     }
 ];
 
-readFile("chopin-ballade1.mid", 'base64', function (err, data) {
+// {
+//   "deltaTime": 0,
+//   "type": 9,
+//   "channel": 0,
+//   "data": [
+//     62,
+//     110
+//   ]
+// }
+
+const songs = [];
+readFile("pirates.json", function (err, data) {
     // Parse the obtainer base64 string ...
-    var midiArray = midiParser.parse(data);
-    // done!
-    console.log(midiArray);
-    midiArray.track.forEach((track) => {
-        track.event.filter((e) => {
-            return e.type === 9 || e.type === 8
-        }).forEach((e) => {
-            console.log(e);
-        });
+    const midiArray = JSON.parse(data.toString());
+    const notes = midiArray.tracks[0].notes
+
+    const uniqueNotes = notes.filter((value, index, self) => {
+        return self.findIndex((orig) => orig.name === value.name) === index;
     });
+
+    songs.push({ midiArray, uniqueNotes, music: notes });
 });
 
-const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm'];
-let remapped = [];
+const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
 
 function getRandomNumber(min, max) {
     let totalEle = max - min + 1;
@@ -96,10 +104,6 @@ function createArrayOfNumber(start, end) {
     return myArray;
 }
 
-const uniqueNotes = pieces[0].notes.filter((value, index, self) => {
-    return self.findIndex((orig) => orig.note === value.note) === index;
-});
-
 const getRoomId = (socket) => {
     const entries = socket.rooms.values();
     if (entries) {
@@ -113,13 +117,21 @@ const getRoomId = (socket) => {
 
 io.on('connection', (socket) => {
 
-    socket.on('disconnect', () => {
+    socket.on("disconnecting", () => {
         const roomId = getRoomId(socket);
-        const room = rooms.find(({ roomId: id }) => id === roomId);
+        const roomIndex = rooms.findIndex(({ roomId: id }) => id === roomId);
+        const room = rooms[roomIndex];
         if (room) {
             room.players = room.players || [];
-            room.players = room.players.filter((id) => id === socket.id);
+            room.players = room.players.filter((id) => id !== socket.id);
+            if (room.players.length === 0) {
+                rooms.splice(roomIndex, 1);
+            }
         }
+    });
+
+    socket.on('disconnect', () => {
+
     });
 
     socket.on('join room', (roomId) => {
@@ -137,6 +149,10 @@ io.on('connection', (socket) => {
 
         let numbersArray = createArrayOfNumber(0, KEYBOARD_KEYS.length - 1);
         if (room) {
+            const song = songs[0];
+            const { uniqueNotes } = song;
+            const { players } = room;
+            room.song = song;
             room.remapped = uniqueNotes.map((note) => {
                 let randomNumber;
                 let randomIndex;
@@ -148,12 +164,12 @@ io.on('connection', (socket) => {
                     numbersArray.splice(randomIndex, 1);
                 }
                 return {
-                    note: note.note,
+                    note: note.name,
                     key: KEYBOARD_KEYS[randomNumber]
                 }
             });
-            io.to(roomId).emit('start game', pieces[0].notes.map(({note}) => {
-                return {key: room.remapped.find((mapped) => mapped.note === note).key}
+            io.to(roomId).emit('start game', song.music.map(({name, time, duration}) => {
+                return {key: room.remapped.find((mapped) => mapped.note === name).key, time, duration }
             }));
         }
     });
