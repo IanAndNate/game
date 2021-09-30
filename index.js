@@ -29,53 +29,8 @@ index.listen(port, () => {
     console.log(`listening on *:${port}`);
 });
 
-let players = [];
-
-const pieces = [
-    {
-        notes: [
-            {note: "E4", start: 0, beats: 1},
-            {note: "D4", start: 1, beats: 1},
-            {note: "C4", start: 2, beats: 1},
-            {note: "D4", start: 3, beats: 1},
-            {note: "E4", start: 4, beats: 1},
-            {note: "E4", start: 5, beats: 1},
-            {note: "E4", start: 6, beats: 2},
-            {note: "D4", start: 8, beats: 1},
-            {note: "D4", start: 9, beats: 1},
-            {note: "D4", start: 10, beats: 2},
-            {note: "E4", start: 12, beats: 1},
-            {note: "G4", start: 13, beats: 1},
-            {note: "G4", start: 14, beats: 2},
-            {note: "E4", start: 16, beats: 1},
-            {note: "D4", start: 17, beats: 1},
-            {note: "C4", start: 18, beats: 1},
-            {note: "D4", start: 19, beats: 1},
-            {note: "E4", start: 20, beats: 1},
-            {note: "E4", start: 21, beats: 1},
-            {note: "E4", start: 22, beats: 1},
-            {note: "E4", start: 23, beats: 1},
-            {note: "D4", start: 24, beats: 1},
-            {note: "D4", start: 25, beats: 1},
-            {note: "E4", start: 26, beats: 1},
-            {note: "D4", start: 27, beats: 1},
-            {note: "C4", start: 28, beats: 4},
-        ],
-        title: "Mary had a little lamb"
-    }
-];
-
-// {
-//   "deltaTime": 0,
-//   "type": 9,
-//   "channel": 0,
-//   "data": [
-//     62,
-//     110
-//   ]
-// }
-
 const songs = [];
+
 readFile("pirates.json", function (err, data) {
     // Parse the obtainer base64 string ...
     const midiArray = JSON.parse(data.toString());
@@ -123,7 +78,7 @@ io.on('connection', (socket) => {
         const room = rooms[roomIndex];
         if (room) {
             room.players = room.players || [];
-            room.players = room.players.filter((id) => id !== socket.id);
+            room.players = room.players.filter(({ id }) => id !== socket.id);
             if (room.players.length === 0) {
                 rooms.splice(roomIndex, 1);
             }
@@ -139,7 +94,7 @@ io.on('connection', (socket) => {
         if (room) {
             socket.join(roomId);
             room.players = room.players || [];
-            room.players.push(socket.id);
+            room.players.push({ id: socket.id });
         }
     });
 
@@ -147,50 +102,58 @@ io.on('connection', (socket) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
 
-        let numbersArray = createArrayOfNumber(0, KEYBOARD_KEYS.length - 1);
         if (room) {
             const song = songs[0];
             const { uniqueNotes } = song;
             const { players } = room;
             room.song = song;
-            room.remapped = uniqueNotes.map((note) => {
-                let randomNumber;
-                let randomIndex;
-                while (typeof randomNumber === 'undefined') {
-                    randomIndex = getRandomNumber(0, KEYBOARD_KEYS.length - 1);
-                    randomNumber = numbersArray[randomIndex];
-                }
-                if (randomIndex) {
-                    numbersArray.splice(randomIndex, 1);
-                }
-                return {
+            const playerNumber = players.length;
+            uniqueNotes.forEach((note, i) => {
+                // 0, 1, 2, 3, 4, 5
+                // 1
+                const insertIndex = i % playerNumber;
+                players[insertIndex].notes = players[insertIndex].notes || [];
+                players[insertIndex].notes.push({
                     note: note.name,
-                    key: KEYBOARD_KEYS[randomNumber]
-                }
+                    key: KEYBOARD_KEYS[players[insertIndex].notes.length]
+                })
             });
-            io.to(roomId).emit('start game', song.music.map(({name, time, duration}) => {
-                return {key: room.remapped.find((mapped) => mapped.note === name).key, time, duration }
-            }));
+            const startTime = Date.now() + 10000;
+            players.forEach((player) => {
+                io.to(player.id).emit('start game', { song: song.music.map(({name, time, duration}) => {
+                    const matched = player.notes.find((mapped) => mapped.note === name);
+                    return {key: matched && matched.key || '', time, duration }
+                }), startTime });
+            });
         }
     });
 
     socket.on('keydown', (msg) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
-
-        const mapped = room.remapped && room.remapped.find(({key}) => key === msg);
-        if (mapped) {
-            io.to(roomId).emit('keydown broadcast', mapped.note);
+        if (room) {
+            const player = room.players.find((player) => player.id === socket.id);
+            if (player) {
+                const mapped = player.notes && player.notes.find(({key}) => key === msg);
+                if (mapped) {
+                    io.to(roomId).emit('keydown broadcast', mapped.note);
+                }
+            }
         }
     });
 
     socket.on('keyup', (msg) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
+        if (room) {
+            const player = room.players.find((player) => player.id === socket.id);
 
-        const mapped = room.remapped && room.remapped.find(({key}) => key === msg);
-        if (mapped) {
-            io.to(roomId).emit('keyup broadcast', mapped.note);
+            if (player) {
+                const mapped = player.notes && player.notes.find(({key}) => key === msg);
+                if (mapped) {
+                    io.to(roomId).emit('keyup broadcast', mapped.note);
+                }
+            }
         }
     });
 });

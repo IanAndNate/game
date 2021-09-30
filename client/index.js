@@ -10,7 +10,7 @@ const Welcome = () => {
 
     const onNewGameClick = useCallback(async (e) => {
         const roomIdResponse = await fetch('/new');
-        const { roomId } = await roomIdResponse.json();
+        const {roomId} = await roomIdResponse.json();
         history.push(`/game/${roomId}`);
     }, [])
 
@@ -20,12 +20,13 @@ const Welcome = () => {
     </>
 }
 
-const Game = ({ match: { params: { roomId }} }) => {
+const Game = ({match: {params: {roomId}}}) => {
     const [socket, setSocket] = useState(null);
     const [keysDown, setKeysDown] = useState({});
     const [toneStarted, setToneStarted] = useState(false);
     const [synth, setSynth] = useState(null);
     const [piece, setPiece] = useState(null);
+    const [started, setStarted] = useState(false);
 
     useEffect(() => {
         const newSocket = io();
@@ -36,20 +37,22 @@ const Game = ({ match: { params: { roomId }} }) => {
     useEffect(() => {
         if (socket) {
             socket.on('keydown broadcast', (e) => {
-                console.log(e);
                 if (synth) {
                     synth.triggerAttack(e, Tone.now());
                 }
             });
             socket.on('keyup broadcast', (e) => {
-                console.log(e);
                 synth.triggerRelease([e], Tone.now());
             });
-            socket.on('start game', (piece) => {
-                setPiece(piece);
+            socket.on('start game', ({song, startTime}) => {
+                setPiece(song);
+                const forwardStart = startTime - Date.now();
+                setTimeout(() => {
+                    setStarted(true);
+                }, forwardStart);
             });
         }
-    }, [socket, setPiece]);
+    }, [socket, setPiece, setStarted]);
 
     useEffect(() => {
         if (socket) {
@@ -100,14 +103,34 @@ const Game = ({ match: { params: { roomId }} }) => {
         }
     }, [socket]);
 
-    return <><button onClick={onStartHandler}>Start</button><input type={'text'}/><div style={{ position: 'relative' }}>{piece && piece.map(({ key, time, duration }, i) => <span key={i} style={{ position: 'absolute', left: time * 100, width:duration * 100, backgroundColor: '#93d793', top: getPosition(key) * 40, padding: '10px', boxSizing: 'border-box' }}>{key}</span>)}</div></>
+    return <>
+        <button onClick={onStartHandler}>Start</button>
+        <input type={'text'}/>
+        <style>
+            {`.started {
+                transform: translateX(100vw);
+            }
+
+            .playbar {
+                transition: transform 60s linear 0s;
+            }`}
+        </style>
+        <div style={{position: 'relative'}}>{piece && piece.map(({key, time, duration}, i) => <span key={i} style={{
+            position: 'absolute',
+            left: time * 100,
+            width: duration * 100,
+            backgroundColor: !key ? 'rgb(215 169 147)': '#93d793',
+            top: getPosition(key) * 40,
+            padding: '10px',
+            boxSizing: 'border-box'
+        }}>{key}</span>)}</div>
+        <div className={started? 'playbar started': 'playbar'} style={{ top: 0, bottom: 0, position: 'absolute', width: '5px', left: 0, backgroundColor: 'red' }}></div>
+    </>
 }
 
 let nextPosition = 0;
 
-const NOTE_POSITIONS = {
-
-}
+const NOTE_POSITIONS = {}
 
 const getPosition = (note) => {
     const existing = NOTE_POSITIONS[note];
