@@ -135,8 +135,8 @@ const Game = ({match: {params: {roomId}}}) => {
     }, [socket]);
 
     return <>
-        <p>latency: {latency}</p>
-        <p>timeDiff: {timeDiff}</p>
+        <p>latency: {latency}ms</p>
+        <p>timeDiff: {timeDiff}ms</p>
         <button onClick={onStartHandler}>Start</button>
         <input type={'text'}/>
         <style>
