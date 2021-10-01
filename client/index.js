@@ -141,11 +141,11 @@ const Game = ({match: {params: {roomId}}}) => {
         <input type={'text'}/>
         <style>
             {`.started {
-                transform: translateX(1546px);
+                transform: translateX(6000px);
             }
 
             .playbar {
-                transition: transform 60s linear 0s;
+                transition: transform 120s linear 0s;
             }`}
         </style>
         <div style={{position: 'relative'}}>{piece && piece.map(({key, time, duration}, i) => <span key={i} style={{

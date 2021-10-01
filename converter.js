@@ -17,3 +17,10 @@ readFile('midi/2289444_1.mid').then((buffer) => {
 
     writeFile('midi/2289444_1.json', JSON.stringify(midi));
 });
+
+readFile('midi/tetris.mid').then((buffer) => {
+    const midi = new Midi.Midi(buffer);
+    console.log(midi);
+
+    writeFile('midi/tetris.json', JSON.stringify(midi));
+});
