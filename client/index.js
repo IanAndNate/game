@@ -25,9 +25,10 @@ const measureLatency = (socket, setLatency, setTimeDiff) => {
 
     // volatile, so the packet will be discarded if the socket is not connected
     socket.volatile.emit("ping", (serverTime) => {
-        const latency = Date.now() - start;
-        const localTime = Date.now() - Math.ceil(latency / 2);
-        console.log(serverTime, localTime);
+        const sendTime = serverTime - start;
+        const latency = Date.now() - serverTime;
+        const localTime = Date.now() - latency;
+        console.log(serverTime, localTime, sendTime, latency);
         const timeDiff = serverTime - localTime;
         setLatency(latency);
         setTimeDiff(timeDiff);
@@ -79,7 +80,7 @@ const Game = ({match: {params: {roomId}}}) => {
 
             setInterval(() => {
                 measureLatency(socket, setLatency, setTimeDiff);
-            }, 5000);
+            }, 2000);
         }
     }, [socket, setLatency, setTimeDiff, synth]);
 
