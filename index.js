@@ -180,4 +180,10 @@ io.on('connection', (socket) => {
             }
         }
     });
+
+    socket.on("ping", (cb) => {
+        if (typeof cb === "function") {
+            cb(Date.now());
+        }
+    });
 });

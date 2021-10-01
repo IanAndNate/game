@@ -20,6 +20,20 @@ const Welcome = () => {
     </>
 }
 
+const measureLatency = (socket, setLatency, setTimeDiff) => {
+    const start = Date.now();
+
+    // volatile, so the packet will be discarded if the socket is not connected
+    socket.volatile.emit("ping", (serverTime) => {
+        const latency = Date.now() - start;
+        const localTime = Date.now() - Math.ceil(latency / 2);
+        console.log(serverTime, localTime);
+        const timeDiff = serverTime - localTime;
+        setLatency(latency);
+        setTimeDiff(timeDiff);
+    });
+}
+
 const Game = ({match: {params: {roomId}}}) => {
     const [socket, setSocket] = useState(null);
     const [keysDown, setKeysDown] = useState({});
@@ -27,6 +41,8 @@ const Game = ({match: {params: {roomId}}}) => {
     const [synth, setSynth] = useState(null);
     const [piece, setPiece] = useState(null);
     const [started, setStarted] = useState(false);
+    const [latency, setLatency] = useState(0);
+    const [timeDiff, setTimeDiff] = useState(0);
 
     useEffect(() => {
         const newSocket = io();
@@ -36,23 +52,36 @@ const Game = ({match: {params: {roomId}}}) => {
 
     useEffect(() => {
         if (socket) {
+            socket.on('start game', ({song, startTime}) => {
+                setPiece(song);
+                const forwardStart = startTime - Date.now() + timeDiff;
+                setTimeout(() => {
+                    setStarted(true);
+                }, forwardStart);
+            });
+        }
+    }, [socket, setPiece, setStarted, timeDiff]);
+
+    useEffect(() => {
+        if (socket) {
             socket.on('keydown broadcast', (e) => {
                 if (synth) {
                     synth.triggerAttack(e, Tone.now());
                 }
             });
             socket.on('keyup broadcast', (e) => {
-                synth.triggerRelease([e], Tone.now());
+                if (synth) {
+                    synth.triggerRelease([e], Tone.now());
+                }
             });
-            socket.on('start game', ({song, startTime}) => {
-                setPiece(song);
-                const forwardStart = startTime - Date.now();
-                setTimeout(() => {
-                    setStarted(true);
-                }, forwardStart);
-            });
+
+            measureLatency(socket, setLatency, setTimeDiff)
+
+            setInterval(() => {
+                measureLatency(socket, setLatency, setTimeDiff);
+            }, 5000);
         }
-    }, [socket, setPiece, setStarted]);
+    }, [socket, setLatency, setTimeDiff, synth]);
 
     useEffect(() => {
         if (socket) {
@@ -104,11 +133,13 @@ const Game = ({match: {params: {roomId}}}) => {
     }, [socket]);
 
     return <>
+        <p>latency: {latency}</p>
+        <p>timeDiff: {timeDiff}</p>
         <button onClick={onStartHandler}>Start</button>
         <input type={'text'}/>
         <style>
             {`.started {
-                transform: translateX(100vw);
+                transform: translateX(1546px);
             }
 
             .playbar {
