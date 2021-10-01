@@ -64,7 +64,7 @@ readFile("midi/amazgrac04.json", function (err, data) {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
 
-    songs.unshift({ midiArray, uniqueNotes, music: notes });
+    songs.push({ midiArray, uniqueNotes, music: notes });
 });
 
 readFile("midi/tetris.json", function (err, data) {
@@ -76,7 +76,7 @@ readFile("midi/tetris.json", function (err, data) {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
 
-    songs.push({ midiArray, uniqueNotes, music: notes });
+    songs.unshift({ midiArray, uniqueNotes, music: notes });
 });
 
 const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
