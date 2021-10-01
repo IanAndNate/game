@@ -92,14 +92,29 @@ const Game = ({match: {params: {roomId}}}) => {
     }, [socket]);
 
     useEffect(() => {
-        // Synth setup;
-        setSynth(new Tone.PolySynth(Tone.Synth).toDestination());
+        const sampler = new Tone.Sampler({
+            urls: {
+                "C1": "notes/C1.mp3",
+                "C2": "notes/C2.mp3",
+                "C3": "notes/C3.mp3",
+                "C4": "notes/C4.mp3",
+                "C5": "notes/C5.mp3",
+                "C6": "notes/C6.mp3",
+                "C7": "notes/C7.mp3",
+                "C8": "notes/C8.mp3",
+            },
+            release: 3,
+            baseUrl: "/",
+        }).toDestination();
+        Tone.loaded().then(() => {
+
+        })
+        setSynth(sampler);
     }, [toneStarted, setSynth])
 
     const keyDownHandler = useCallback((e) => {
         if (!toneStarted) {
             Tone.start().then(() => setToneStarted(true));
-
         }
         if (socket) {
             if (!keysDown[e.key]) {
