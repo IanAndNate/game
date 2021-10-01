@@ -5,7 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const config = {
     entry: [
         'react-hot-loader/patch',
-        './index.js'
+        './index.tsx'
     ],
     output: {
         path: path.resolve(__dirname, '../static'),
@@ -15,9 +15,9 @@ const config = {
     module: {
         rules: [
             {
-                test: /\.(js|jsx)$/,
-                use: 'babel-loader',
-                exclude: /node_modules/
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
             }
         ]
     },

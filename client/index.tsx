@@ -1,8 +1,9 @@
-import {io} from "socket.io-client";
-import React, {useCallback, useEffect, useState} from 'react';
+import { io, Socket } from 'socket.io-client';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import * as Tone from 'tone';
-import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
+import { BrowserRouter, Route, RouteComponentProps, Switch, useHistory } from "react-router-dom";
+import { Sampler } from 'tone';
 
 const Welcome = () => {
 
@@ -20,36 +21,44 @@ const Welcome = () => {
     </>
 }
 
-const measureLatency = (socket, setLatency, setTimeDiff) => {
+const measureLatency = (socket: Socket): Promise<{ latency: number, timeDiff: number }> => {
     const start = Date.now();
 
-    // volatile, so the packet will be discarded if the socket is not connected
-    socket.volatile.emit("ping", (serverTime) => {
-        const sendTime = serverTime - start;
-        const receiveTime = Date.now() - serverTime;
-        const latency = Date.now() - start;
-        const localTime = Date.now() - latency;
-        console.log(serverTime, localTime, sendTime, latency);
-        const timeDiff = (sendTime + receiveTime - latency) / 2;
-        setLatency(latency);
-        setTimeDiff(timeDiff);
+    return new Promise((resolve) => {
+        socket.volatile.emit("ping", (serverTime: number) => {
+            const sendTime = serverTime - start;
+            const receiveTime = Date.now() - serverTime;
+            const latency = Date.now() - start;
+            const timeDiff = (sendTime + receiveTime - latency) / 2;
+            resolve({ latency, timeDiff });
+        });
     });
 }
 
-const Game = ({match: {params: {roomId}}}) => {
-    const [socket, setSocket] = useState(null);
-    const [keysDown, setKeysDown] = useState({});
-    const [toneStarted, setToneStarted] = useState(false);
-    const [synth, setSynth] = useState(null);
-    const [piece, setPiece] = useState(null);
-    const [started, setStarted] = useState(false);
-    const [latency, setLatency] = useState(0);
-    const [timeDiff, setTimeDiff] = useState(0);
+interface Note {
+    key: string;
+    duration: number;
+    time: number;
+}
+
+type GameRouteProps = RouteComponentProps<{ roomId: string }>;
+
+const Game = ({match: {params: {roomId}}}: GameRouteProps) => {
+    const [socket, setSocket] = useState<Socket>(null);
+    const [keysDown, setKeysDown] = useState<{ [key: string]: boolean }>({});
+    const [toneStarted, setToneStarted] = useState<boolean>(false);
+    const [synth, setSynth] = useState<Sampler>(null);
+    const [piece, setPiece] = useState<[Note]>(null);
+    const [started, setStarted] = useState<boolean>(false);
+    const [latency, setLatency] = useState<number>(0);
+    const [timeDiff, setTimeDiff] = useState<number>(0);
 
     useEffect(() => {
         const newSocket = io();
         setSocket(newSocket);
-        return () => newSocket.close();
+        return () => {
+            newSocket.close();
+        }
     }, [setSocket]);
 
     useEffect(() => {
@@ -77,10 +86,16 @@ const Game = ({match: {params: {roomId}}}) => {
                 }
             });
 
-            measureLatency(socket, setLatency, setTimeDiff)
+            measureLatency(socket).then(({ latency, timeDiff }) => {
+                setLatency(latency);
+                setTimeDiff(timeDiff);
+            });
 
             setInterval(() => {
-                measureLatency(socket, setLatency, setTimeDiff);
+                measureLatency(socket).then(({ latency, timeDiff }) => {
+                    setLatency(latency);
+                    setTimeDiff(timeDiff);
+                });
             }, 2000);
         }
     }, [socket, setLatency, setTimeDiff, synth]);
@@ -112,6 +127,7 @@ const Game = ({match: {params: {roomId}}}) => {
         Tone.loaded().then(() => {
 
         })
+        // @ts-ignore
         setSynth(sampler);
     }, [toneStarted, setSynth])
 
@@ -181,9 +197,9 @@ const Game = ({match: {params: {roomId}}}) => {
 
 let nextPosition = 0;
 
-const NOTE_POSITIONS = {}
+const NOTE_POSITIONS:{ [note: string]: number } = {}
 
-const getPosition = (note) => {
+const getPosition = (note: string) => {
     const existing = NOTE_POSITIONS[note];
     if (typeof existing !== 'undefined') {
         return existing;
@@ -199,7 +215,7 @@ function App() {
             <Route exact path="/">
                 <Welcome/>
             </Route>
-            <Route exact path="/game/:roomId" render={routeProps => (
+            <Route exact path="/game/:roomId" render={(routeProps: GameRouteProps) => (
                 <Game {...routeProps} />
             )}/>
         </Switch>
