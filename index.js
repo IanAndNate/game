@@ -4,9 +4,11 @@ import {Server} from 'socket.io';
 import midiParser from 'midi-parser-js';
 import {readFile} from 'fs';
 import {v4 as uuidv4} from 'uuid';
+import { songsRouter, songs } from './songs.js';
 
 const app = express();
 
+app.use(songsRouter);
 app.use(express.static(`static`));
 const rooms = [];
 app.get('/new', (req, res) => {
@@ -14,7 +16,7 @@ app.get('/new', (req, res) => {
     const newRoom = {roomId}
     rooms.push(newRoom);
     res.send({roomId: newRoom.roomId});
-})
+});
 
 app.get('*', function (req, res) {
     res.sendFile('static/index.html', {root: '.'});
@@ -29,8 +31,6 @@ index.listen(port, () => {
     console.log(`listening on *:${port}`);
 });
 
-const songs = [];
-
 readFile("midi/2289444_1.json", function (err, data) {
     // Parse the obtainer base64 string ...
     const midiArray = JSON.parse(data.toString());
@@ -40,7 +40,7 @@ readFile("midi/2289444_1.json", function (err, data) {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
 
-    songs.push({ midiArray, uniqueNotes, music: notes });
+    songs.push({ fileName: '2289444_1.mid', midiArray, uniqueNotes, music: notes });
 });
 
 readFile("midi/pirates.json", function (err, data) {
@@ -52,7 +52,7 @@ readFile("midi/pirates.json", function (err, data) {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
 
-    songs.push({ midiArray, uniqueNotes, music: notes });
+    songs.push({ fileName: 'pirates.mid', midiArray, uniqueNotes, music: notes });
 });
 
 readFile("midi/amazgrac04.json", function (err, data) {
@@ -64,7 +64,7 @@ readFile("midi/amazgrac04.json", function (err, data) {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
 
-    songs.unshift({ midiArray, uniqueNotes, music: notes });
+    songs.unshift({ fileName: 'amazgrac04.mid', midiArray, uniqueNotes, music: notes });
 });
 
 readFile("midi/tetris.json", function (err, data) {
@@ -76,7 +76,7 @@ readFile("midi/tetris.json", function (err, data) {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
 
-    songs.push({ midiArray, uniqueNotes, music: notes });
+    songs.push({ fileName: 'tetris.mid', midiArray, uniqueNotes, music: notes });
 });
 
 const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
@@ -139,9 +139,16 @@ io.on('connection', (socket) => {
         const room = rooms.find(({ roomId: id }) => id === roomId);
 
         if (room) {
-            const song = songs[0];
-            const { uniqueNotes } = song;
             const { players } = room;
+            if (songs.length === 0) {
+                players.forEach((player) => {
+                    io.to(player.id).emit('alert', { message: 'No songs on server :(' });
+                });
+                return;
+            }
+            const song = songs[getRandomNumber(0, songs.length - 1)];
+            // console.log('starting game with', song.fileName);
+            const { uniqueNotes } = song;
             room.song = song;
             const playerNumber = players.length;
             uniqueNotes.forEach((note, i) => {

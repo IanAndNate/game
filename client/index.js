@@ -88,6 +88,9 @@ const Game = ({match: {params: {roomId}}}) => {
     useEffect(() => {
         if (socket) {
             socket.emit('join room', roomId);
+            socket.on('alert', ({ message }) => {
+                window.alert(message);
+            });
         }
     }, [socket]);
 
