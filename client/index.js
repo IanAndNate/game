@@ -26,10 +26,11 @@ const measureLatency = (socket, setLatency, setTimeDiff) => {
     // volatile, so the packet will be discarded if the socket is not connected
     socket.volatile.emit("ping", (serverTime) => {
         const sendTime = serverTime - start;
-        const latency = Date.now() - serverTime;
+        const receiveTime = Date.now() - serverTime;
+        const latency = Date.now() - start;
         const localTime = Date.now() - latency;
         console.log(serverTime, localTime, sendTime, latency);
-        const timeDiff = serverTime - localTime;
+        const timeDiff = (sendTime + receiveTime - latency) / 2;
         setLatency(latency);
         setTimeDiff(timeDiff);
     });
