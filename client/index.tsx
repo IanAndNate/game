@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Route, Switch, useHistory } from "react-router-dom";
+import { Admin } from './ui/admin';
 import { Game } from './ui/game';
 import { GameRouteProps } from './ui/game/types';
 
@@ -30,6 +31,9 @@ function App() {
             <Route exact path="/game/:roomId" render={(routeProps: GameRouteProps) => (
                 <Game {...routeProps} />
             )}/>
+            <Route exact path="/admin">
+                <Admin />
+            </Route>
         </Switch>
     </BrowserRouter>;
 }

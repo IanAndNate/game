@@ -12,6 +12,7 @@ export interface Song {
     midiArray: MidiJSON;
     uniqueNotes: TrackJSON['notes'];
     music: TrackJSON['notes'];
+    enabled: boolean;
 }
 
 export interface Player {
