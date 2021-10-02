@@ -23,7 +23,7 @@ export interface Player {
 export interface State {
     roomId?: string;
     socket?: Socket;
-    piece?: Note[];
+    piece?: { notes: Note[], song: Note[], startTime: number };
     status: GameStatus;
     synth?: Sampler;
     latency?: number;

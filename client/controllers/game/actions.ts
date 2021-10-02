@@ -2,9 +2,10 @@ import { StoreActionApi } from 'react-sweet-state';
 import { GameStatus, State } from './types';
 import { io } from 'socket.io-client';
 import * as Tone from 'tone';
+import { MouseEvent } from 'react';
 
 const initSynth = () => async ({ getState }: StoreActionApi<State>) => {
-    const synth = new Tone.Sampler({
+    const sampler = new Tone.Sampler({
         urls: {
             "C1": "notes/C1.mp3",
             "C2": "notes/C2.mp3",
@@ -14,18 +15,32 @@ const initSynth = () => async ({ getState }: StoreActionApi<State>) => {
             "C6": "notes/C6.mp3",
             "C7": "notes/C7.mp3",
             "C8": "notes/C8.mp3",
+            "A1": "notes/A1.mp3",
+            "A2": "notes/A2.mp3",
+            "A3": "notes/A3.mp3",
+            "A4": "notes/A4.mp3",
+            "A5": "notes/A5.mp3",
+            "A6": "notes/A6.mp3",
+            "A7": "notes/A7.mp3",
         },
         release: 3,
         baseUrl: "/",
     }).toDestination();
+
+
+    const comp = new Tone.Compressor(-30, 3);
+    const vol = new Tone.Volume(-12);
+    sampler.chain(comp, vol, Tone.Destination);
+    sampler.toDestination();
+
     await Tone.loaded();
     await Tone.start();
     const { socket } = getState();
-    socket.on('keydown broadcast', (e) => {
-        synth.triggerAttack(e, Tone.now());
+    socket.on('keydown broadcast', (e: string) => {
+        sampler.triggerAttack(e, Tone.now());
     });
-    socket.on('keyup broadcast', (e) => {
-        synth.triggerRelease([e], Tone.now());
+    socket.on('keyup broadcast', (e: string) => {
+        sampler.triggerRelease([e], Tone.now());
     });
 }
 
@@ -34,12 +49,13 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
     socket.emit('join room', roomId);
 
     // set up all the handlers here
-    socket.on('start game', ({ song, startTime }) => {
-        setState({ 
+    socket.on('start game', (song) => {
+        setState({
             status: GameStatus.Starting,
             piece: song,
         });
         dispatch(initSynth());
+        const { startTime } = song;
         const { timeDiff } = getState();
         const forwardStart = startTime - Date.now() + timeDiff;
         setTimeout(() => {
@@ -117,3 +133,23 @@ export const keyUp = (e: KeyboardEvent) => ({ getState, setState }: StoreActionA
         setState({ keysDown });
     }
 }
+
+export const mouseDown = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setState }: StoreActionApi<State>) => {
+    const { keysDown, socket } = getState();
+    const key = e.currentTarget.value;
+    if (!keysDown.has(key)) {
+        socket.emit('keydown', key);
+        keysDown.add(key);
+        setState({ keysDown });
+    }
+};
+
+export const mouseUp = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setState }: StoreActionApi<State>) => {
+    const { keysDown, socket } = getState();
+    const key = e.currentTarget.value;
+    if (!keysDown.has(key)) {
+        socket.emit('keyup', key);
+        keysDown.delete(key);
+        setState({ keysDown });
+    }
+};

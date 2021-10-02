@@ -3,31 +3,76 @@ import { useGame, useKeyboard } from "../../../controllers/game"
 import { GameStatus } from '../../../controllers/game/types';
 
 export const Play = () => {
-    const [{ latency, timeDiff, piece, status }] = useGame();
+    const [{ latency, timeDiff, piece, status }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
-    return <>
+
+    const { song, notes } = piece || { song: null, piece: null };
+    const lastNote = song && song[song.length - 1];
+    const duration = lastNote && (lastNote.time + lastNote.duration);
+    const numberNotes = notes && notes.length;
+
+    return  <>
         <p>latency: {latency}ms</p>
         <p>timeDiff: {timeDiff}ms</p>
-        <input type={'text'}/>
         <style>
-            {`.started {
-                transform: translateX(6000px);
+            {`.started .musicPage {
+                transform: rotateX(71deg) translate3d(0, ${duration * 500}px, 0);
             }
-
-            .playbar {
-                transition: transform 120s linear 0s;
-            }`}
+            
+            .musicContainer {
+                height: 500px;
+                overflow: hidden;
+                perspective: 1000px;
+                position: relative;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .musicPage {
+                position: absolute;
+                height: ${duration * 500}px;
+                width: ${numberNotes * 30}px;
+                transform: rotateX(71deg);
+                bottom: 0;
+                transform-origin: bottom;
+                transition: transform ${duration}s linear 0s;
+            }
+            
+            .note {
+                position: absolute;
+                padding: 10px;
+                box-sizing: border-box;
+                width: 20px;
+            }
+            
+            .noteBar {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .displayNote {
+                width: 20px;
+                margin-right: 10px;
+            }
+`}
         </style>
-        <div style={{position: 'relative'}}>{piece && piece.map(({key, time, duration}, i) => <span key={i} style={{
-            position: 'absolute',
-            left: time * 100,
-            width: duration * 100,
-            backgroundColor: !key ? 'rgb(215 169 147)': '#93d793',
-            top: getPosition(key) * 40,
-            padding: '10px',
-            boxSizing: 'border-box'
-        }}>{key}</span>)}</div>
-        <div className={status === GameStatus.Running ? 'playbar started': 'playbar'} style={{ top: 0, bottom: 0, position: 'absolute', width: '5px', left: 0, backgroundColor: 'red' }}></div>
+        <div className={status === GameStatus.Running ? 'musicContainer started': 'musicContainer'}>
+            <div className={'musicPage'}>{song && song.map(({key, time, duration}, i) => <span className={'note'} key={i} style={{
+                bottom: time * 500,
+                height: duration * 500,
+                backgroundColor: !key ? 'rgb(215 169 147)': '#93d793',
+                left: getPosition(key) * 30,
+            }}></span>)}</div>
+        </div>
+        <div className={'noteBar'}>
+            {notes && notes.map(({ key }, i) =>
+                <button value={key} onMouseDown={mouseDown} onMouseUp={mouseUp} className={'displayNote'} key={i} style={{
+                    left: getPosition(key) * 40,
+                }}>{key}</button>
+            )}
+        </div>
     </>
 }
 

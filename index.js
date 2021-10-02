@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { readFile } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { songsRouter, songs } from './songs.js';
+import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 const app = express();
 app.use(songsRouter);
 app.use(express.static(`static`));
@@ -102,7 +103,18 @@ io.on('connection', (socket) => {
         if (room) {
             socket.join(roomId);
             room.players = room.players || [];
-            room.players.push({ id: socket.id, notes: [] });
+            room.players.push({
+                id: socket.id,
+                notes: [],
+                name: uniqueNamesGenerator({
+                    dictionaries: [adjectives, animals],
+                    separator: ' ',
+                    style: 'capital',
+                }),
+            });
+            room.players.forEach((player) => {
+                io.to(player.id).emit('players', room.players.map(p => p.name));
+            });
         }
     });
     socket.on('request start game', () => {
