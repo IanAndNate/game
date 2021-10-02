@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
             });
             const startTime = Date.now() + 10000;
             players.forEach((player) => {
-                io.to(player.id).emit('start game', { song: song.music.map(({name, time, duration}) => {
+                io.to(player.id).emit('start game', { notes: player.notes, song: song.music.map(({name, time, duration}) => {
                     const matched = player.notes.find((mapped) => mapped.note === name);
                     return {key: matched && matched.key || '', time, duration }
                 }), startTime });
