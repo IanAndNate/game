@@ -6,6 +6,7 @@ import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { MidiJSON } from '@tonejs/midi';
 import { Room } from './types';
+import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 
 const app = express();
 
@@ -133,7 +134,18 @@ io.on('connection', (socket) => {
         if (room) {
             socket.join(roomId);
             room.players = room.players || [];
-            room.players.push({ id: socket.id, notes: [] });
+            room.players.push({ 
+                id: socket.id, 
+                notes: [], 
+                name: uniqueNamesGenerator({
+                    dictionaries: [adjectives, animals],
+                    separator: ' ',
+                    style: 'capital',
+                }),  
+            });
+            room.players.forEach((player) => {
+                io.to(player.id).emit('players', room.players.map(p => p.name));
+            });
         }
     });
 

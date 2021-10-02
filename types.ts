@@ -16,6 +16,7 @@ export interface Song {
 
 export interface Player {
     id: string;
+    name: string;
     notes: PlayerNote[]
 }
 
