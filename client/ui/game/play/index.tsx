@@ -26,6 +26,7 @@ export const Play = () => {
                 position: relative;
                 display: flex;
                 justify-content: center;
+                perspective-origin: bottom;
             }
             
             .musicPage {
