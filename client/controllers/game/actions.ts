@@ -27,7 +27,6 @@ const initSynth = () => async ({ getState }: StoreActionApi<State>) => {
         baseUrl: "/",
     }).toDestination();
 
-
     const comp = new Tone.Compressor(-30, 3);
     const vol = new Tone.Volume(-12);
     sampler.chain(comp, vol, Tone.Destination);
