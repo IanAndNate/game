@@ -1,42 +1,39 @@
-import React, { useCallback } from 'react';
-import ReactDOM from 'react-dom';
-import { BrowserRouter, Route, Switch, useHistory } from "react-router-dom";
-import { Admin } from './ui/admin';
-import { Game } from './ui/game';
-import { GameRouteProps } from './ui/game/types';
+import React from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { Admin } from "./ui/admin";
+import { Game } from "./ui/game";
+import { GameRouteProps } from "./ui/game/types";
+import { Welcome } from "./ui/welcome";
+import styled from "@emotion/styled";
 
-// TODO refactor this out too
-const Welcome = () => {
+const Wrapper = styled.div`
+    font-family: sans-serif;
+    font-size: small;
+`;
 
-    let history = useHistory();
+const App = () => {
+    return (
+        <Wrapper>
+            <BrowserRouter>
+                <Switch>
+                    <Route exact path="/">
+                        <Welcome />
+                    </Route>
+                    <Route
+                        exact
+                        path="/game/:roomId"
+                        render={(routeProps: GameRouteProps) => (
+                            <Game {...routeProps} />
+                        )}
+                    />
+                    <Route exact path="/admin">
+                        <Admin />
+                    </Route>
+                </Switch>
+            </BrowserRouter>
+        </Wrapper>
+    );
+};
 
-    const onNewGameClick = useCallback(async (e) => {
-        const roomIdResponse = await fetch('/new');
-        const {roomId} = await roomIdResponse.json();
-        history.push(`/game/${roomId}`);
-    }, [])
-
-    return <>
-        Welcome
-        <button onClick={onNewGameClick}>New game</button>
-    </>
-}
-
-function App() {
-    return <BrowserRouter>
-        <Switch>
-            <Route exact path="/">
-                <Welcome/>
-            </Route>
-            <Route exact path="/game/:roomId" render={(routeProps: GameRouteProps) => (
-                <Game {...routeProps} />
-            )}/>
-            <Route exact path="/admin">
-                <Admin />
-            </Route>
-        </Switch>
-    </BrowserRouter>;
-}
-
-ReactDOM.render(<App/>, document.getElementById('root'));
-
+ReactDOM.render(<App />, document.getElementById("root"));

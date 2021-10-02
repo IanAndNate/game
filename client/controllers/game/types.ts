@@ -18,6 +18,8 @@ export enum GameStatus {
 export interface Player {
     id: string;
     name: string;
+    isCurrent?: boolean;
+    isPressed?: boolean;
 }
 
 export interface State {

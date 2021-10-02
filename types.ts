@@ -25,3 +25,8 @@ export interface PlayerNote {
     note: string;
     key: string;
 }
+
+export interface KeyPress {
+    playerId: string;
+    note: string;
+}

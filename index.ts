@@ -5,7 +5,7 @@ import {readFile} from 'fs';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { MidiJSON } from '@tonejs/midi';
-import { Room } from './types';
+import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 
 const app = express();
@@ -20,6 +20,18 @@ app.get('/new', (req, res) => {
     const newRoom: Room = { roomId, players: [], song: null }
     rooms.push(newRoom);
     res.send({roomId: newRoom.roomId});
+});
+
+app.get('/rooms', (_req, res) => {
+    res.send(rooms.map(room => ({
+        ...room,
+        players: room.players.map(player => ({
+            ...player,
+            notes: undefined,
+        })),
+        song: undefined,
+        started: !!room.song,
+    })));
 });
 
 app.get('*', function (req, res) {
@@ -110,6 +122,16 @@ const getRoomId = (socket: Socket) => {
     }
 }
 
+const playersBroadcast = (room: Room) => {
+    room.players.forEach((player) => {
+        io.to(player.id).emit('players', room.players.map(p => ({
+            ...p,
+            isCurrent: p.id === player.id,
+            notes: undefined,
+        })));
+    });
+}
+
 io.on('connection', (socket) => {
 
     socket.on("disconnecting", () => {
@@ -121,6 +143,8 @@ io.on('connection', (socket) => {
             room.players = room.players.filter(({ id }) => id !== socket.id);
             if (room.players.length === 0) {
                 rooms.splice(roomIndex, 1);
+            } else {
+                playersBroadcast(room);
             }
         }
     });
@@ -143,9 +167,9 @@ io.on('connection', (socket) => {
                     style: 'capital',
                 }),  
             });
-            room.players.forEach((player) => {
-                io.to(player.id).emit('players', room.players.map(p => p.name));
-            });
+            playersBroadcast(room);
+        } else {
+            socket.emit('abort');
         }
     });
 
@@ -195,7 +219,11 @@ io.on('connection', (socket) => {
             if (player) {
                 const mapped = player.notes && player.notes.find(({key}) => key === msg);
                 if (mapped) {
-                    io.to(roomId).emit('keydown broadcast', mapped.note);
+                    const keypress: KeyPress = {
+                        playerId: player.id,
+                        note: mapped.note,
+                    }
+                    io.to(roomId).emit('keydown broadcast', keypress);
                 }
             }
         }
@@ -210,7 +238,11 @@ io.on('connection', (socket) => {
             if (player) {
                 const mapped = player.notes && player.notes.find(({key}) => key === msg);
                 if (mapped) {
-                    io.to(roomId).emit('keyup broadcast', mapped.note);
+                    const keypress: KeyPress = {
+                        playerId: player.id,
+                        note: mapped.note,
+                    }
+                    io.to(roomId).emit('keyup broadcast', keypress);
                 }
             }
         }
