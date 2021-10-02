@@ -216,7 +216,7 @@ const Game = ({match: {params: {roomId}}}: GameRouteProps) => {
         <button onClick={onStartHandler}>Start</button>
         <style>
             {`.started .musicPage {
-                transform: rotateX(71deg) translateY(${duration * 500}px);
+                transform: rotateX(71deg) translate3d(0, ${duration * 500}px, 0);
             }
             
             .musicContainer {
@@ -235,7 +235,7 @@ const Game = ({match: {params: {roomId}}}: GameRouteProps) => {
                 transform: rotateX(71deg);
                 bottom: 0;
                 transform-origin: bottom;
-                transition: transform 120s linear 0s;
+                transition: transform ${duration}s linear 0s;
             }
             
             .note {
