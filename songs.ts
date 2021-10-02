@@ -1,14 +1,16 @@
 import Midi from '@tonejs/midi';
 import { Router } from 'express';
-import fileUpload from 'express-fileupload';
+import fileUpload, { UploadedFile } from 'express-fileupload';
+import { Song } from './types';
+import { RequestHandler } from 'express-serve-static-core';
 
-export const songs = [];
+export const songs: Song[] = [];
 
-const getSongs = (req, res) => {
+const getSongs: RequestHandler = (req, res) => {
     res.send(JSON.stringify(songs.map(song => song.fileName)));
 }
 
-const parseMidi = (fileName, data) => {
+const parseMidi = (fileName: string, data: Buffer) => {
     const midiArray = new Midi.Midi(data);
     const notes = midiArray.tracks.reduce((acc, track) => {
         // if (track.instrument.family !== 'piano') {
@@ -28,9 +30,11 @@ const parseMidi = (fileName, data) => {
     return { fileName, midiArray, uniqueNotes, music: notes, };
 };
 
-const postSongs = (req, res) => {
+const postSongs: RequestHandler = (req, res) => {
     try {
-        const song = req.files.song;
+        // TODO: handle UploadedFile[]
+        // @ts-ignore
+        const song: UploadedFile = req.files.song;
         if (!song) {
             throw new Error('no song uploaded, try curl -F "song=@filename.mid"');
         }
@@ -47,7 +51,7 @@ const postSongs = (req, res) => {
     }
 };
 
-const deleteSongs = (req, res) => {
+const deleteSongs: RequestHandler = (req, res) => {
     songs.length = 0;
     res.send(JSON.stringify(songs.map(song => song.fileName)));
 }

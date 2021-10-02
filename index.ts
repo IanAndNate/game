@@ -1,18 +1,22 @@
 import express from 'express';
 import {createServer} from 'http';
-import {Server} from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import {readFile} from 'fs';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
+import { MidiJSON } from '@tonejs/midi';
+import { Room } from './types';
 
 const app = express();
 
 app.use(songsRouter);
 app.use(express.static(`static`));
-const rooms = [];
+
+const rooms: Room[] = [];
+
 app.get('/new', (req, res) => {
     const roomId = uuidv4();
-    const newRoom = {roomId}
+    const newRoom: Room = { roomId, players: [], song: null }
     rooms.push(newRoom);
     res.send({roomId: newRoom.roomId});
 });
@@ -32,8 +36,8 @@ index.listen(port, () => {
 
 readFile("midi/2289444_1.json", function (err, data) {
     // Parse the obtainer base64 string ...
-    const midiArray = JSON.parse(data.toString());
-    const notes = midiArray.tracks[0].notes
+    const midiArray: MidiJSON = JSON.parse(data.toString());
+    const notes = midiArray.tracks[0].notes;
 
     const uniqueNotes = notes.filter((value, index, self) => {
         return self.findIndex((orig) => orig.name === value.name) === index;
@@ -44,7 +48,7 @@ readFile("midi/2289444_1.json", function (err, data) {
 
 readFile("midi/pirates.json", function (err, data) {
     // Parse the obtainer base64 string ...
-    const midiArray = JSON.parse(data.toString());
+    const midiArray: MidiJSON = JSON.parse(data.toString());
     const notes = midiArray.tracks[0].notes
 
     const uniqueNotes = notes.filter((value, index, self) => {
@@ -56,7 +60,7 @@ readFile("midi/pirates.json", function (err, data) {
 
 readFile("midi/amazgrac04.json", function (err, data) {
     // Parse the obtainer base64 string ...
-    const midiArray = JSON.parse(data.toString());
+    const midiArray: MidiJSON = JSON.parse(data.toString());
     const notes = midiArray.tracks[0].notes
 
     const uniqueNotes = notes.filter((value, index, self) => {
@@ -68,7 +72,7 @@ readFile("midi/amazgrac04.json", function (err, data) {
 
 readFile("midi/tetris.json", function (err, data) {
     // Parse the obtainer base64 string ...
-    const midiArray = JSON.parse(data.toString());
+    const midiArray: MidiJSON = JSON.parse(data.toString());
     const notes = midiArray.tracks[0].notes
 
     const uniqueNotes = notes.filter((value, index, self) => {
@@ -80,13 +84,13 @@ readFile("midi/tetris.json", function (err, data) {
 
 const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
 
-function getRandomNumber(min, max) {
+function getRandomNumber(min: number, max: number) {
     let totalEle = max - min + 1;
     let result = Math.floor(Math.random() * totalEle) + min;
     return result;
 }
 
-function createArrayOfNumber(start, end) {
+function createArrayOfNumber(start: number, end: number) {
     let myArray = [];
     for (let i = start; i <= end; i++) {
         myArray.push(i);
@@ -94,7 +98,7 @@ function createArrayOfNumber(start, end) {
     return myArray;
 }
 
-const getRoomId = (socket) => {
+const getRoomId = (socket: Socket) => {
     const entries = socket.rooms.values();
     if (entries) {
         let room = entries.next();
@@ -129,7 +133,7 @@ io.on('connection', (socket) => {
         if (room) {
             socket.join(roomId);
             room.players = room.players || [];
-            room.players.push({ id: socket.id });
+            room.players.push({ id: socket.id, notes: [] });
         }
     });
 
