@@ -24,14 +24,16 @@ const config = {
     resolve: {
         extensions: [
             '.js',
-            '.jsx'
+            '.jsx',
+            '.ts',
+            '.tsx'
         ],
         alias: {
             'react-dom': '@hot-loader/react-dom'
         }
     },
     devServer: {
-        contentBase: '../static'
+        static: '../static'
     },
     plugins: [
         new HtmlWebpackPlugin ({
