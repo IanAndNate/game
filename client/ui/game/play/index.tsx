@@ -59,7 +59,7 @@ export const Play = () => {
 `}
         </style>
         <div className={status === GameStatus.Running ? 'musicContainer started': 'musicContainer'}>
-            <div className={'musicPage'}>{song && song.map(({key, time, duration}, i) => <span className={'note'} key={i} style={{
+            <div className={'musicPage'}>{song && song.filter(({ key }) => !!key).map(({key, time, duration}, i) => <span className={'note'} key={i} style={{
                 bottom: time * 500,
                 height: duration * 500,
                 backgroundColor: !key ? 'rgb(215 169 147)': '#93d793',

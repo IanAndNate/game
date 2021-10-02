@@ -146,7 +146,7 @@ export const mouseDown = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setS
 export const mouseUp = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setState }: StoreActionApi<State>) => {
     const { keysDown, socket } = getState();
     const key = e.currentTarget.value;
-    if (!keysDown.has(key)) {
+    if (keysDown.has(key)) {
         socket.emit('keyup', key);
         keysDown.delete(key);
         setState({ keysDown });
