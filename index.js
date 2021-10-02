@@ -31,7 +31,7 @@ readFile("midi/2289444_1.json", function (err, data) {
     const uniqueNotes = notes.filter((value, index, self) => {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
-    songs.push({ fileName: '2289444_1.mid', midiArray, uniqueNotes, music: notes });
+    songs.push({ fileName: '2289444_1.mid', midiArray, uniqueNotes, music: notes, enabled: true });
 });
 readFile("midi/pirates.json", function (err, data) {
     // Parse the obtainer base64 string ...
@@ -40,7 +40,7 @@ readFile("midi/pirates.json", function (err, data) {
     const uniqueNotes = notes.filter((value, index, self) => {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
-    songs.push({ fileName: 'pirates.mid', midiArray, uniqueNotes, music: notes });
+    songs.push({ fileName: 'pirates.mid', midiArray, uniqueNotes, music: notes, enabled: true });
 });
 readFile("midi/amazgrac04.json", function (err, data) {
     // Parse the obtainer base64 string ...
@@ -49,7 +49,7 @@ readFile("midi/amazgrac04.json", function (err, data) {
     const uniqueNotes = notes.filter((value, index, self) => {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
-    songs.unshift({ fileName: 'amazgrac04.mid', midiArray, uniqueNotes, music: notes });
+    songs.unshift({ fileName: 'amazgrac04.mid', midiArray, uniqueNotes, music: notes, enabled: true });
 });
 readFile("midi/tetris.json", function (err, data) {
     // Parse the obtainer base64 string ...
@@ -58,7 +58,7 @@ readFile("midi/tetris.json", function (err, data) {
     const uniqueNotes = notes.filter((value, index, self) => {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
-    songs.push({ fileName: 'tetris.mid', midiArray, uniqueNotes, music: notes });
+    songs.push({ fileName: 'tetris.mid', midiArray, uniqueNotes, music: notes, enabled: true });
 });
 const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
 function getRandomNumber(min, max) {
@@ -122,13 +122,14 @@ io.on('connection', (socket) => {
         const room = rooms.find(({ roomId: id }) => id === roomId);
         if (room) {
             const { players } = room;
-            if (songs.length === 0) {
+            const enabledSongs = songs.filter(s => s.enabled);
+            if (enabledSongs.length === 0) {
                 players.forEach((player) => {
-                    io.to(player.id).emit('alert', { message: 'No songs on server :(' });
+                    io.to(player.id).emit('alert', { message: 'No songs enabled on server :(' });
                 });
                 return;
             }
-            const song = songs[getRandomNumber(0, songs.length - 1)];
+            const song = enabledSongs[getRandomNumber(0, enabledSongs.length - 1)];
             // console.log('starting game with', song.fileName);
             const { uniqueNotes } = song;
             room.song = song;
