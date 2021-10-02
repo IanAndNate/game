@@ -1,0 +1,48 @@
+name: Deploy master
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Install
+        run: npm install
+
+      - name: Build server
+        run: npm run build
+
+      - name: Install client
+        run: cd client && npm install && cd -
+
+      - name: Build client
+        run: cd client && npm run build-prod && cd -
+
+      - name: Copy static
+        run: cp static dist/static
+
+      - name: Copy package.json
+        run: cp package.json dist/package.json
+
+      - name: Copy procfile
+        run: cp Procfile dist/Procfile
+
+      - name: Generate deployment package
+        run: cd dist && zip -r deploy.zip . && cd -
+
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: game
+          environment_name: dev
+          version_label: ${{GITHUB_SHA}}
+          region: ap-southeast-2
+          deployment_package: dist/deploy.zip
