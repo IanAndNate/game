@@ -110,31 +110,44 @@ const Game = ({match: {params: {roomId}}}: GameRouteProps) => {
     }, [socket]);
 
     useEffect(() => {
-        const sampler = new Tone.Sampler({
-            urls: {
-                "C1": "notes/C1.mp3",
-                "C2": "notes/C2.mp3",
-                "C3": "notes/C3.mp3",
-                "C4": "notes/C4.mp3",
-                "C5": "notes/C5.mp3",
-                "C6": "notes/C6.mp3",
-                "C7": "notes/C7.mp3",
-                "C8": "notes/C8.mp3",
-            },
-            release: 3,
-            baseUrl: "/",
-        }).toDestination();
-        Tone.loaded().then(() => {
+        if (toneStarted) {
+            const sampler = new Tone.Sampler({
+                urls: {
+                    "C1": "notes/C1.mp3",
+                    "C2": "notes/C2.mp3",
+                    "C3": "notes/C3.mp3",
+                    "C4": "notes/C4.mp3",
+                    "C5": "notes/C5.mp3",
+                    "C6": "notes/C6.mp3",
+                    "C7": "notes/C7.mp3",
+                    "C8": "notes/C8.mp3",
+                    "A1": "notes/A1.mp3",
+                    "A2": "notes/A2.mp3",
+                    "A3": "notes/A3.mp3",
+                    "A4": "notes/A4.mp3",
+                    "A5": "notes/A5.mp3",
+                    "A6": "notes/A6.mp3",
+                    "A7": "notes/A7.mp3",
+                },
+                release: 3,
+                baseUrl: "/",
+            });
+            const comp = new Tone.Compressor(-30, 3);
+            const vol = new Tone.Volume(-12);
+            sampler.chain(comp, vol, Tone.Destination);
+            sampler.toDestination();
+            Tone.loaded().then(() => {
+                setSynth(sampler);
+            });
 
-        })
-        // @ts-ignore
-        setSynth(sampler);
+            return () => {
+                sampler.releaseAll();
+                sampler.dispose();
+            }
+        }
     }, [toneStarted, setSynth])
 
     const keyDownHandler = useCallback((e) => {
-        if (!toneStarted) {
-            Tone.start().then(() => setToneStarted(true));
-        }
         if (socket) {
             if (!keysDown[e.key]) {
                 socket.emit('keydown', e.key);
@@ -163,6 +176,9 @@ const Game = ({match: {params: {roomId}}}: GameRouteProps) => {
     }, [keyDownHandler, keyUpHandler]);
 
     const onStartHandler = useCallback(() => {
+        if (!toneStarted) {
+            Tone.start().then(() => setToneStarted(true));
+        }
         if (socket) {
             socket.emit('request start game');
         }
