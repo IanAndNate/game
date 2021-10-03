@@ -3,6 +3,7 @@ import { useGame, useKeyboard } from '../../../controllers/game'
 import { GameStatus } from '../../../controllers/game/types';
 import { Room } from '../../common/room';
 import styled from '@emotion/styled';
+import { LatencyPanel } from '../../common/latency-panel';
 
 const MusicContainer = styled('div')`
     height: 500px;
@@ -36,11 +37,14 @@ const Note = styled.span<{ time: number; duration: number; note: string; }>`
     position: absolute;
     padding: 10px;
     box-sizing: border-box;
-    width: 20px;
+    width: 18px;
     bottom: ${({ time }) => time * 500}px;
     height: ${({ duration }) => duration * 500}px;
-    background-color: #93d793;
+    background: linear-gradient(0deg, #93d793 0%, #93d79300 100%);
     left: ${({ note }) => getPosition(note) * 30}px;
+    border-style: solid;
+    border-color: black;
+    border-width: 5px 1px;
 `;
 
 const UserNote = styled.button`
@@ -49,7 +53,7 @@ const UserNote = styled.button`
 `;
 
 export const Play = () => {
-    const [{ latency, timeDiff, piece, status, players }, { mouseDown, mouseUp }] = useGame();
+    const [{ piece, status, players }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
 
     const { song, notes, speedFactor } = piece || { song: null, piece: null };
@@ -58,8 +62,6 @@ export const Play = () => {
     const numberNotes = notes && notes.length;
 
     return <>
-        <p>latency: {latency}ms</p>
-        <p>timeDiff: {timeDiff}ms</p>
         <Room players={players} disabled={false}/>
         <MusicContainer>
             <MusicPage numberNotes={numberNotes}
@@ -81,6 +83,7 @@ export const Play = () => {
                 <UserNote value={key} onMouseDown={mouseDown} onMouseUp={mouseUp} key={i}>{key}</UserNote>
             )}
         </NoteBar>
+        <LatencyPanel/>
     </>
 }
 
