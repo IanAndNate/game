@@ -41,6 +41,9 @@ jobs:
       - name: Copy procfile
         run: cp Procfile dist/Procfile
 
+      - name: Copy midi folder
+        run: cp -R midi dist/midi
+
       - name: Generate deployment package
         run: cd dist && zip -r deploy.zip . && cd -
 
