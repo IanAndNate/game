@@ -54,7 +54,7 @@ export const Play = () => {
 
     const { song, notes } = piece || { song: null, piece: null };
     const lastNote = song && song[ song.length - 1 ];
-    const duration = lastNote && (lastNote.time + lastNote.duration);
+    const duration = lastNote && (lastNote.time + lastNote.duration) * 1.2;
     const numberNotes = notes && notes.length;
 
     return <>

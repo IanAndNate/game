@@ -122,10 +122,9 @@ export const ping = () => async ({ getState, setState }: StoreActionApi<State>) 
     const start = Date.now();
     return new Promise<void>((resolve) => {
         socket.volatile.emit("ping", (serverTime: number) => {
-            const sendTime = serverTime - start;
-            const receiveTime = Date.now() - serverTime;
-            const latency = Date.now() - start;
-            const timeDiff = (sendTime + receiveTime - latency) / 2;
+            const now = Date.now();
+            const latency = now - start; // Measures round trip time, send + receive
+            const timeDiff = (now + latency / 2 - serverTime); // This will have some inaccuracies as send time and receive time are not equal but serverTime - now is just receive time.
             setState({
                 latency,
                 timeDiff,
