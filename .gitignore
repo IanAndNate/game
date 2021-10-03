@@ -12,3 +12,4 @@ dist
 static/index.html
 static/*.js
 static/*.txt
+static/*.hot-update.json
