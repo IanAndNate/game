@@ -108,9 +108,9 @@ export const leaveRoom = () => ({ getState, setState }: StoreActionApi<State>) =
     });
 };
 
-export const startGame = () => ({ getState, setState }: StoreActionApi<State>) => {
+export const startGame = ({ speedFactor }: { speedFactor: number }) => ({ getState, setState }: StoreActionApi<State>) => {
     const { socket } = getState();
-    socket.emit('request start game');
+    socket.emit('request start game', { speedFactor });
     setState({
         status: GameStatus.Loading,
     });

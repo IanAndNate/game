@@ -25,7 +25,7 @@ export interface Player {
 export interface State {
     roomId?: string;
     socket?: Socket;
-    piece?: { notes: Note[], song: Note[], startTime: number };
+    piece?: { notes: Note[], song: Note[], startTime: number, speedFactor: number };
     status: GameStatus;
     synth?: Sampler;
     latency?: number;

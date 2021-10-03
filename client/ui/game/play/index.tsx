@@ -14,14 +14,14 @@ const MusicContainer = styled('div')`
     perspective-origin: bottom;
 `;
 
-const MusicPage = styled.div<{ duration: number; numberNotes: number; started: boolean; }>`
+const MusicPage = styled.div<{ duration: number; numberNotes: number; started: boolean; speedFactor: number }>`
     position: absolute;
     height: ${({ duration }) => duration * 500}px;
     width: ${({ numberNotes }) => numberNotes * 30}px;
     transform: rotateX(70deg);
     bottom: 0;
     transform-origin: bottom;
-    transition: transform ${({ duration }) => duration}s linear 0s;
+    transition: transform ${({ duration, speedFactor }) => duration * speedFactor}s linear 0s;
     transform: rotateX(71deg) ${({ started, duration }) => started ? 'translate3d(0, ' + duration * 500 + 'px, 0)' : ''};
 `;
 
@@ -52,9 +52,9 @@ export const Play = () => {
     const [{ latency, timeDiff, piece, status, players }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
 
-    const { song, notes } = piece || { song: null, piece: null };
+    const { song, notes, speedFactor } = piece || { song: null, piece: null };
     const lastNote = song && song[ song.length - 1 ];
-    const duration = lastNote && (lastNote.time + lastNote.duration) * 1.2;
+    const duration = lastNote && (lastNote.time + lastNote.duration);
     const numberNotes = notes && notes.length;
 
     return <>
@@ -64,6 +64,7 @@ export const Play = () => {
         <MusicContainer>
             <MusicPage numberNotes={numberNotes}
                        duration={duration}
+                       speedFactor={speedFactor}
                        started={status === GameStatus.Running}>
                 {song && song
                     .filter(({ key }) => !!key)
