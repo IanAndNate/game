@@ -3,6 +3,7 @@ import { useGame, useKeyboard } from '../../../controllers/game'
 import { GameStatus } from '../../../controllers/game/types';
 import { Room } from '../../common/room';
 import styled from '@emotion/styled';
+import { LatencyPanel } from '../../common/latency-panel';
 
 const MusicContainer = styled('div')`
     height: 500px;
@@ -14,14 +15,14 @@ const MusicContainer = styled('div')`
     perspective-origin: bottom;
 `;
 
-const MusicPage = styled.div<{ duration: number; numberNotes: number; started: boolean; }>`
+const MusicPage = styled.div<{ duration: number; numberNotes: number; started: boolean; speedFactor: number }>`
     position: absolute;
     height: ${({ duration }) => duration * 500}px;
     width: ${({ numberNotes }) => numberNotes * 30}px;
     transform: rotateX(70deg);
     bottom: 0;
     transform-origin: bottom;
-    transition: transform ${({ duration }) => duration}s linear 0s;
+    transition: transform ${({ duration, speedFactor }) => duration * speedFactor}s linear 0s;
     transform: rotateX(71deg) ${({ started, duration }) => started ? 'translate3d(0, ' + duration * 500 + 'px, 0)' : ''};
 `;
 
@@ -36,11 +37,14 @@ const Note = styled.span<{ time: number; duration: number; note: string; }>`
     position: absolute;
     padding: 10px;
     box-sizing: border-box;
-    width: 20px;
+    width: 18px;
     bottom: ${({ time }) => time * 500}px;
     height: ${({ duration }) => duration * 500}px;
-    background-color: #93d793;
+    background: linear-gradient(0deg, #93d793 0%, #93d79300 100%);
     left: ${({ note }) => getPosition(note) * 30}px;
+    border-style: solid;
+    border-color: black;
+    border-width: 5px 1px;
 `;
 
 const UserNote = styled.button`
@@ -49,21 +53,20 @@ const UserNote = styled.button`
 `;
 
 export const Play = () => {
-    const [{ latency, timeDiff, piece, status, players }, { mouseDown, mouseUp }] = useGame();
+    const [{ piece, status, players }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
 
-    const { song, notes } = piece || { song: null, piece: null };
+    const { song, notes, speedFactor } = piece || { song: null, piece: null };
     const lastNote = song && song[ song.length - 1 ];
-    const duration = lastNote && (lastNote.time + lastNote.duration) * 1.2;
+    const duration = lastNote && (lastNote.time + lastNote.duration);
     const numberNotes = notes && notes.length;
 
     return <>
-        <p>latency: {latency}ms</p>
-        <p>timeDiff: {timeDiff}ms</p>
         <Room players={players} disabled={false}/>
         <MusicContainer>
             <MusicPage numberNotes={numberNotes}
                        duration={duration}
+                       speedFactor={speedFactor}
                        started={status === GameStatus.Running}>
                 {song && song
                     .filter(({ key }) => !!key)
@@ -80,6 +83,7 @@ export const Play = () => {
                 <UserNote value={key} onMouseDown={mouseDown} onMouseUp={mouseUp} key={i}>{key}</UserNote>
             )}
         </NoteBar>
+        <LatencyPanel/>
     </>
 }
 
