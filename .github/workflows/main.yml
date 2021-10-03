@@ -33,7 +33,7 @@ jobs:
         run: cd client && npm run build-prod && cd -
 
       - name: Copy static
-        run: cp -a static dist/static
+        run: mkdir -p dist && cp -R static dist/static
 
       - name: Copy package.json
         run: cp package.json dist/package.json
