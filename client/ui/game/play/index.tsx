@@ -1,9 +1,10 @@
 import React from 'react';
 import { useGame, useKeyboard } from "../../../controllers/game"
 import { GameStatus } from '../../../controllers/game/types';
+import { Room } from '../../common/room';
 
 export const Play = () => {
-    const [{ latency, timeDiff, piece, status }, { mouseDown, mouseUp }] = useGame();
+    const [{ latency, timeDiff, piece, status, players }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
 
     const { song, notes } = piece || { song: null, piece: null };
@@ -14,6 +15,7 @@ export const Play = () => {
     return  <>
         <p>latency: {latency}ms</p>
         <p>timeDiff: {timeDiff}ms</p>
+        <Room players={players} disabled={false}/>
         <style>
             {`.started .musicPage {
                 transform: rotateX(71deg) translate3d(0, ${duration * 500}px, 0);

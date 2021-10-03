@@ -3,8 +3,9 @@ import { GameStatus, State } from './types';
 import { io } from 'socket.io-client';
 import * as Tone from 'tone';
 import { MouseEvent } from 'react';
+import { KeyPress } from '../../../types';
 
-const initSynth = () => async ({ getState }: StoreActionApi<State>) => {
+const initSynth = () => async ({ getState, setState }: StoreActionApi<State>) => {
     const sampler = new Tone.Sampler({
         urls: {
             "C1": "notes/C1.mp3",
@@ -35,11 +36,25 @@ const initSynth = () => async ({ getState }: StoreActionApi<State>) => {
     await Tone.loaded();
     await Tone.start();
     const { socket } = getState();
-    socket.on('keydown broadcast', (e: string) => {
-        sampler.triggerAttack(e, Tone.now());
+    socket.on('keydown broadcast', (e: KeyPress) => {
+        sampler.triggerAttack(e.note, Tone.now());
+        const { players } = getState();
+        setState({
+            players: players.map(p => p.id === e.playerId ? ({
+                ...p,
+                isPressed: true,
+            }) : p),
+        });
     });
-    socket.on('keyup broadcast', (e: string) => {
-        sampler.triggerRelease([e], Tone.now());
+    socket.on('keyup broadcast', (e: KeyPress) => {
+        sampler.triggerRelease([e.note], Tone.now());
+        const { players } = getState();
+        setState({
+            players: players.map(p => p.id === e.playerId ? ({
+                ...p,
+                isPressed: false,
+            }) : p),
+        });
     });
 }
 
@@ -71,6 +86,11 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
             players,
         });
     });
+    socket.on('abort', () => {
+        setState({
+            status: GameStatus.Disconnected,
+        });
+    });
 
     setState({
         socket,
@@ -80,8 +100,8 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
 };
 
 export const leaveRoom = () => ({ getState, setState }: StoreActionApi<State>) => {
-    const { socket } = getState();
-    socket.close();
+    const { socket, roomId } = getState();
+    socket?.close();
     setState({
         status: GameStatus.Disconnected,
         roomId: undefined,

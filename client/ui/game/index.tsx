@@ -18,6 +18,8 @@ export const Game = ({ match: { params: { roomId } }}: GameRouteProps) => {
         case GameStatus.Starting:
         case GameStatus.Running:
             return <Play />;
+        case GameStatus.Disconnected:
+            return <>No such room, <a href="/">return home</a></>;
         default:
             return null;
     }
