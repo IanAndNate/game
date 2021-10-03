@@ -7,8 +7,6 @@ on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -35,7 +33,7 @@ jobs:
         run: cd client && npm run build-prod && cd -
 
       - name: Copy static
-        run: cp static dist/static
+        run: cp -R static dist/static
 
       - name: Copy package.json
         run: cp package.json dist/package.json
