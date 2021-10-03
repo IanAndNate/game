@@ -5,7 +5,7 @@ import {readFile} from 'fs';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { MidiJSON } from '@tonejs/midi';
-import { KeyPress, Room } from './types';
+import { KeyPress, PlayerNote, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 
 const app = express();
@@ -96,6 +96,15 @@ readFile("midi/tetris.json", function (err, data) {
 });
 
 const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
+const SCALE = "CDEFGAB";
+const LOBBY_NOTES: PlayerNote[] = KEYBOARD_KEYS.map((key, idx) => {
+    const octave = Math.floor(idx / SCALE.length) + 3;
+    const note = SCALE.split('')[idx % SCALE.length];
+    return {
+        key,
+        note: `${note}${octave}`,
+    };
+});
 
 function getRandomNumber(min: number, max: number) {
     let totalEle = max - min + 1;
@@ -211,42 +220,27 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('keydown', (msg) => {
+    const handleKeyEvent = (msg: string, event: 'down' | 'up') => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
         if (room) {
             const player = room.players.find((player) => player.id === socket.id);
             if (player) {
-                const mapped = player.notes && player.notes.find(({key}) => key === msg);
+                const notes = player.notes.length > 0 ? player.notes : LOBBY_NOTES; // give people something to do while waiting
+                const mapped = notes && notes.find(({key}) => key === msg);
                 if (mapped) {
                     const keypress: KeyPress = {
                         playerId: player.id,
                         note: mapped.note,
                     }
-                    io.to(roomId).emit('keydown broadcast', keypress);
+                    io.to(roomId).emit(`key${event} broadcast`, keypress);
                 }
             }
         }
-    });
+    };
 
-    socket.on('keyup', (msg) => {
-        const roomId = getRoomId(socket);
-        const room = rooms.find(({ roomId: id }) => id === roomId);
-        if (room) {
-            const player = room.players.find((player) => player.id === socket.id);
-
-            if (player) {
-                const mapped = player.notes && player.notes.find(({key}) => key === msg);
-                if (mapped) {
-                    const keypress: KeyPress = {
-                        playerId: player.id,
-                        note: mapped.note,
-                    }
-                    io.to(roomId).emit('keyup broadcast', keypress);
-                }
-            }
-        }
-    });
+    socket.on('keydown', (msg) => handleKeyEvent(msg, 'down'));
+    socket.on('keyup', (msg) => handleKeyEvent(msg, 'up'));
 
     socket.on("ping", (cb) => {
         if (typeof cb === "function") {

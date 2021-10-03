@@ -68,7 +68,6 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
             status: GameStatus.Starting,
             piece: song,
         });
-        dispatch(initSynth());
         const { startTime } = song;
         const { timeDiff } = getState();
         const forwardStart = startTime - Date.now() + timeDiff;
@@ -97,6 +96,7 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
         roomId,
         status: GameStatus.Lobby,
     });
+    dispatch(initSynth());
 };
 
 export const leaveRoom = () => ({ getState, setState }: StoreActionApi<State>) => {
