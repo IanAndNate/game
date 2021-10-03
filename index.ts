@@ -158,14 +158,14 @@ io.on('connection', (socket) => {
         if (room) {
             socket.join(roomId);
             room.players = room.players || [];
-            room.players.push({ 
-                id: socket.id, 
-                notes: [], 
+            room.players.push({
+                id: socket.id,
+                notes: [],
                 name: uniqueNamesGenerator({
                     dictionaries: [adjectives, animals],
                     separator: ' ',
                     style: 'capital',
-                }),  
+                }),
             });
             playersBroadcast(room);
         } else {

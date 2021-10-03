@@ -72,7 +72,7 @@ const postSongs: RequestHandler = (req, res, next) => {
             throw new Error('no song uploaded, try curl -F "song=@filename.mid"');
         }
         if (Array.isArray(song)) {
-            song.forEach(s => addSong(s.name, s.data));            
+            song.forEach(s => addSong(s.name, s.data));
         } else {
             addSong(song.name, song.data);
         }
