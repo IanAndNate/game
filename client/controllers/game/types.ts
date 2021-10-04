@@ -29,7 +29,7 @@ export interface State {
     status: GameStatus;
     synth?: Sampler;
     latency?: number;
-    timeDiff?: number;
+    timeDiff?: { diff: number, measures: number[] };
     keysDown: Set<string>;
     players: Player[];
 }

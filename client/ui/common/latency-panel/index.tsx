@@ -13,14 +13,14 @@ const Panel = styled.div`
 `;
 
 export const LatencyPanel = () => {
-    const [{ latency, timeDiff }] = useGame();
+    const [{ latency, timeDiff: { diff } }] = useGame();
     if (latency === undefined) {
         return null;
     }
     return (
         <Panel>
             <div>latency: {latency}ms</div>
-            <div>time diff: {timeDiff}ms</div>
+            <div>time diff: {diff}ms</div>
         </Panel>
     );
 };

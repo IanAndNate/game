@@ -8,24 +8,24 @@ import { KeyPress } from '../../../types';
 const initSynth = () => async ({ getState, setState }: StoreActionApi<State>) => {
     const sampler = new Tone.Sampler({
         urls: {
-            "C1": "notes/C1.mp3",
-            "C2": "notes/C2.mp3",
-            "C3": "notes/C3.mp3",
-            "C4": "notes/C4.mp3",
-            "C5": "notes/C5.mp3",
-            "C6": "notes/C6.mp3",
-            "C7": "notes/C7.mp3",
-            "C8": "notes/C8.mp3",
-            "A1": "notes/A1.mp3",
-            "A2": "notes/A2.mp3",
-            "A3": "notes/A3.mp3",
-            "A4": "notes/A4.mp3",
-            "A5": "notes/A5.mp3",
-            "A6": "notes/A6.mp3",
-            "A7": "notes/A7.mp3",
+            'C1': 'notes/C1.mp3',
+            'C2': 'notes/C2.mp3',
+            'C3': 'notes/C3.mp3',
+            'C4': 'notes/C4.mp3',
+            'C5': 'notes/C5.mp3',
+            'C6': 'notes/C6.mp3',
+            'C7': 'notes/C7.mp3',
+            'C8': 'notes/C8.mp3',
+            'A1': 'notes/A1.mp3',
+            'A2': 'notes/A2.mp3',
+            'A3': 'notes/A3.mp3',
+            'A4': 'notes/A4.mp3',
+            'A5': 'notes/A5.mp3',
+            'A6': 'notes/A6.mp3',
+            'A7': 'notes/A7.mp3',
         },
         release: 3,
-        baseUrl: "/",
+        baseUrl: '/',
     }).toDestination();
 
     const comp = new Tone.Compressor(-30, 3);
@@ -69,8 +69,8 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
             piece: song,
         });
         const { startTime } = song;
-        const { timeDiff } = getState();
-        const forwardStart = startTime - Date.now() + timeDiff;
+        const { timeDiff: { diff } } = getState();
+        const forwardStart = startTime - Date.now() + diff;
         setTimeout(() => {
             setState({
                 status: GameStatus.Running,
@@ -108,7 +108,10 @@ export const leaveRoom = () => ({ getState, setState }: StoreActionApi<State>) =
     });
 };
 
-export const startGame = ({ speedFactor }: { speedFactor: number }) => ({ getState, setState }: StoreActionApi<State>) => {
+export const startGame = ({ speedFactor }: { speedFactor: number }) => ({
+                                                                            getState,
+                                                                            setState
+                                                                        }: StoreActionApi<State>) => {
     const { socket } = getState();
     socket.emit('request start game', { speedFactor });
     setState({
@@ -116,23 +119,51 @@ export const startGame = ({ speedFactor }: { speedFactor: number }) => ({ getSta
     });
 };
 
-export const ping = () => async ({ getState, setState }: StoreActionApi<State>) => {
-    const { socket } = getState();
-
+export const ping = (calculateTimeDiff: boolean) => ({ getState, setState }: StoreActionApi<State>) => {
+    const { socket, timeDiff: { measures } } = getState();
     const start = Date.now();
-    return new Promise<void>((resolve) => {
-        socket.volatile.emit("ping", (serverTime: number) => {
+    return new Promise((resolve) => {
+        socket.volatile.emit('ping', (serverTime: number) => {
             const now = Date.now();
+            resolve({ start, now, serverTime });
             const latency = now - start; // Measures round trip time, send + receive
-            const timeDiff = (now + latency / 2 - serverTime); // This will have some inaccuracies as send time and receive time are not equal but serverTime - now is just receive time.
-            setState({
-                latency,
-                timeDiff,
-            })
-            resolve();
+            if (calculateTimeDiff) {
+                const timeDiff = (start + latency / 2 - serverTime); // This will have some inaccuracies as send time and receive time are not equal but serverTime - now is just receive time.
+                measures.push(timeDiff)
+                setState({
+                    latency,
+                    timeDiff: { diff: median(measures), measures },
+                });
+            } else {
+                setState({
+                    latency,
+                });
+            }
         });
     });
 };
+
+function median(data: number[]) {
+    return quartile50(data);
+}
+
+function quartile50(data: number[]) {
+    return quartile(data, 0.5);
+}
+
+function quartile(data: number[], q: number) {
+    data.sort((a, b) => {
+        return a - b;
+    });
+    const pos = ((data.length) - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    if ((data[ base + 1 ] !== undefined)) {
+        return data[ base ] + rest * (data[ base + 1 ] - data[ base ]);
+    } else {
+        return data[ base ];
+    }
+}
 
 export const keyDown = (e: KeyboardEvent) => ({ getState, setState }: StoreActionApi<State>) => {
     const { keysDown, socket } = getState();

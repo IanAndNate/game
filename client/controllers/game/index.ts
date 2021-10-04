@@ -8,6 +8,7 @@ const initialState: State = {
     status: GameStatus.Disconnected,
     keysDown: new Set<string>(),
     players: [],
+    timeDiff: { diff: 0, measures: [] },
 };
 
 type Actions = typeof actions;
@@ -34,8 +35,12 @@ export const useGameRoom = (roomId: string) => {
 
 export const usePollLatency = () => {
     const [, { ping }] = useGame();
+    let calculateTimeDiff = true;
     useEffect(() => {
-        const timer = setInterval(ping, 2000);
+        const timer = setInterval(() => ping(calculateTimeDiff), 2000);
+        setTimeout(() => {
+            calculateTimeDiff = false;
+        }, 60000);
         return () => clearInterval(timer);
     }, []);
 };
