@@ -4,6 +4,7 @@ import { GameStatus } from '../../../controllers/game/types';
 import { Room } from '../../common/room';
 import styled from '@emotion/styled';
 import { LatencyPanel } from '../../common/latency-panel';
+import { keyframes } from '@emotion/react';
 
 const MusicContainer = styled('div')`
     height: 500px;
@@ -52,8 +53,16 @@ const UserNote = styled.button`
     margin-right: 10px;
 `;
 
+const CountDown = styled.div<{ timeTillLaunch: number }>`
+    position: absolute;
+    align-items: center;
+    font-size: 71px;
+    height: 100%;
+    display: ${({ timeTillLaunch }) => timeTillLaunch > 0 ? 'flex': 'none'};
+`
+
 export const Play = () => {
-    const [{ piece, status, players }, { mouseDown, mouseUp }] = useGame();
+    const [{ piece, status, players, timeTillLaunch }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
 
     const { song, notes, speedFactor } = piece || { song: null, piece: null };
@@ -64,6 +73,7 @@ export const Play = () => {
     return <>
         <Room players={players} disabled={false}/>
         <MusicContainer>
+            <CountDown timeTillLaunch={timeTillLaunch}>{timeTillLaunch}</CountDown>
             <MusicPage numberNotes={numberNotes}
                        duration={duration}
                        speedFactor={speedFactor}

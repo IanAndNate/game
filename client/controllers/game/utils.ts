@@ -19,3 +19,16 @@ function quartile(data: number[], q: number) {
         return data[ base ];
     }
 }
+
+export const countDown = (startTime:number, from:number, timeGap:number, callback: (i: number) => void) => {
+    return setTimeout(() => {;
+        callback(from);
+        const interval = setInterval(() => {
+            from = from - 1;
+            callback(from);
+            if (from <= 0) {
+                clearInterval(interval);
+            }
+        }, timeGap);
+    }, startTime);
+}

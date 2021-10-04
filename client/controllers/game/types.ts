@@ -33,4 +33,5 @@ export interface State {
     keysDown: Set<string>;
     players: Player[];
     toneStarted: boolean;
+    timeTillLaunch?: number;
 }

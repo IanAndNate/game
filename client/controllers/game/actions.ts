@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import * as Tone from 'tone';
 import { MouseEvent } from 'react';
 import { KeyPress } from '../../../types';
-import { median } from './utils';
+import { countDown, median } from './utils';
 
 const initSynth = () => async ({ getState, setState }: StoreActionApi<State>) => {
     const sampler = new Tone.Sampler({
@@ -72,11 +72,18 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
         const { startTime } = song;
         const { timeDiff: { diff } } = getState();
         const forwardStart = startTime - Date.now() + diff;
-        setTimeout(() => {
-            setState({
-                status: GameStatus.Running,
-            });
-        }, forwardStart);
+        countDown(forwardStart - 3000, 3, 1000, (i) => {
+            if (i === 0) {
+                setState({
+                    status: GameStatus.Running,
+                    timeTillLaunch: i,
+                });
+            } else {
+                setState({
+                    timeTillLaunch: i,
+                });
+            }
+        });
     });
     socket.on('alert', ({ message }) => {
         window.alert(message);
