@@ -9,7 +9,7 @@
     "clean": "rm dist/bundle.js",
     "start": "npm run build && cp -R midi dist/midi && node dist/index.js",
     "build": "tsc",
-    "start:watch": "(nodemon --watch '**' --ext 'ts,json' --ignore 'client/**' --ignore 'dist/**' --exec 'npm start') & (cd client && npm start)"
+    "start:watch": "(nodemon --watch '**' --ext 'ts,json' --ignore 'client/**' --ignore 'dist/**' --ignore 'static/**' --exec 'npm start') & (cd client && npm start)"
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.27",

@@ -6,6 +6,7 @@ import { Game } from "./ui/game";
 import { GameRouteProps } from "./ui/game/types";
 import { Welcome } from "./ui/welcome";
 import styled from "@emotion/styled";
+import { Test } from "./ui/game/test";
 
 const Wrapper = styled.div`
     font-family: sans-serif;
@@ -29,6 +30,9 @@ const App = () => {
                     />
                     <Route exact path="/admin">
                         <Admin />
+                    </Route>
+                    <Route exact path="/test">
+                        <Test />
                     </Route>
                 </Switch>
             </BrowserRouter>
