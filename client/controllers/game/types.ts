@@ -32,4 +32,5 @@ export interface State {
     timeDiff?: { diff: number, measures: number[] };
     keysDown: Set<string>;
     players: Player[];
+    toneStarted: boolean;
 }

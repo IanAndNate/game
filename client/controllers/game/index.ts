@@ -9,6 +9,7 @@ const initialState: State = {
     keysDown: new Set<string>(),
     players: [],
     timeDiff: { diff: 0, measures: [] },
+    toneStarted: false,
 };
 
 type Actions = typeof actions;
@@ -37,7 +38,8 @@ export const usePollLatency = () => {
     const [, { ping }] = useGame();
     let calculateTimeDiff = true;
     useEffect(() => {
-        const timer = setInterval(() => ping(calculateTimeDiff), 2000);
+        const timer = setInterval(() => ping(calculateTimeDiff), 500);
+        // stop calculating the time diff after a bit as it's expensive and uses up memory
         setTimeout(() => {
             calculateTimeDiff = false;
         }, 60000);

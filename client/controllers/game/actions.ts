@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import * as Tone from 'tone';
 import { MouseEvent } from 'react';
 import { KeyPress } from '../../../types';
+import { median } from './utils';
 
 const initSynth = () => async ({ getState, setState }: StoreActionApi<State>) => {
     const sampler = new Tone.Sampler({
@@ -34,7 +35,7 @@ const initSynth = () => async ({ getState, setState }: StoreActionApi<State>) =>
     sampler.toDestination();
 
     await Tone.loaded();
-    await Tone.start();
+
     const { socket } = getState();
     socket.on('keydown broadcast', (e: KeyPress) => {
         sampler.triggerAttack(e.note, Tone.now());
@@ -143,30 +144,14 @@ export const ping = (calculateTimeDiff: boolean) => ({ getState, setState }: Sto
     });
 };
 
-function median(data: number[]) {
-    return quartile50(data);
-}
-
-function quartile50(data: number[]) {
-    return quartile(data, 0.5);
-}
-
-function quartile(data: number[], q: number) {
-    data.sort((a, b) => {
-        return a - b;
-    });
-    const pos = ((data.length) - 1) * q;
-    const base = Math.floor(pos);
-    const rest = pos - base;
-    if ((data[ base + 1 ] !== undefined)) {
-        return data[ base ] + rest * (data[ base + 1 ] - data[ base ]);
-    } else {
-        return data[ base ];
+export const keyDown = (e: KeyboardEvent) => async ({ getState, setState }: StoreActionApi<State>) => {
+    const { keysDown, socket, toneStarted } = getState();
+    if (!toneStarted) {
+        await Tone.start();
+        setState({
+            toneStarted: true
+        });
     }
-}
-
-export const keyDown = (e: KeyboardEvent) => ({ getState, setState }: StoreActionApi<State>) => {
-    const { keysDown, socket } = getState();
     if (!keysDown.has(e.key)) {
         socket.emit('keydown', e.key);
         keysDown.add(e.key);
@@ -174,8 +159,14 @@ export const keyDown = (e: KeyboardEvent) => ({ getState, setState }: StoreActio
     }
 }
 
-export const keyUp = (e: KeyboardEvent) => ({ getState, setState }: StoreActionApi<State>) => {
-    const { keysDown, socket } = getState();
+export const keyUp = (e: KeyboardEvent) => async ({ getState, setState }: StoreActionApi<State>) => {
+    const { keysDown, socket, toneStarted } = getState();
+    if (!toneStarted) {
+        await Tone.start();
+        setState({
+            toneStarted: true
+        });
+    }
     if (keysDown.has(e.key)) {
         socket.emit('keyup', e.key);
         keysDown.delete(e.key);
@@ -183,9 +174,15 @@ export const keyUp = (e: KeyboardEvent) => ({ getState, setState }: StoreActionA
     }
 }
 
-export const mouseDown = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setState }: StoreActionApi<State>) => {
-    const { keysDown, socket } = getState();
+export const mouseDown = (e: MouseEvent<HTMLButtonElement>) => async ({ getState, setState }: StoreActionApi<State>) => {
+    const { keysDown, socket, toneStarted } = getState();
     const key = e.currentTarget.value;
+    if (!toneStarted) {
+        await Tone.start();
+        setState({
+            toneStarted: true
+        });
+    }
     if (!keysDown.has(key)) {
         socket.emit('keydown', key);
         keysDown.add(key);
@@ -193,9 +190,15 @@ export const mouseDown = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setS
     }
 };
 
-export const mouseUp = (e: MouseEvent<HTMLButtonElement>) => ({ getState, setState }: StoreActionApi<State>) => {
-    const { keysDown, socket } = getState();
+export const mouseUp = (e: MouseEvent<HTMLButtonElement>) => async ({ getState, setState }: StoreActionApi<State>) => {
+    const { keysDown, socket, toneStarted } = getState();
     const key = e.currentTarget.value;
+    if (!toneStarted) {
+        await Tone.start();
+        setState({
+            toneStarted: true
+        });
+    }
     if (keysDown.has(key)) {
         socket.emit('keyup', key);
         keysDown.delete(key);
