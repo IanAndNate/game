@@ -6,6 +6,7 @@ interface Props {
     players: Player[];
     action?: React.ReactNode;
     disabled: boolean;
+    children?: React.ReactNode;
 }
 
 export const RoomWrapper = styled.div<{ disabled: boolean }>`
@@ -39,7 +40,7 @@ const Action = styled.span`
     padding: 2px;
 `;
 
-export const Room = ({ players, disabled, action }: Props) => {
+export const Room = ({ players, disabled, action, children }: Props) => {
     return (
         <RoomWrapper disabled={disabled}>
             <PlayerList>
@@ -54,6 +55,7 @@ export const Room = ({ players, disabled, action }: Props) => {
                 ))}
             </PlayerList>
             {action && <Action>{action}</Action>}
+            {children}
         </RoomWrapper>
     );
 };
