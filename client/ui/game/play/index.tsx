@@ -51,7 +51,6 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     animation : ${({ duration }) => moveVertically(duration)} ${({ duration, speedFactor }) => duration * speedFactor}s linear;
     animation-play-state: ${({ started }) => started ? 'running' : 'paused'};
     animation-fill-mode: both;
-    will-change: transform;
 `;
 
 const NoteBar = styled('div')`
@@ -66,7 +65,7 @@ const Note = styled.span<{ time: number; duration: number; note: string; index: 
     padding: 10px;
     box-sizing: border-box;
     width: ${TRACK_WIDTH}px;
-    bottom: ${({ time }) => time * 500}px;
+    bottom: ${({ time }) => (time + 3) * 500}px;
     height: ${({ duration }) => duration * 500}px;
     background-color: ${({ note }) => COLOURS[ getPosition(note) % COLOURS.length ]};
     left: ${({ note }) => getPosition(note) * (TRACK_WIDTH + 10)}px;
@@ -122,7 +121,7 @@ export const Play = () => {
 
     const { song, notes, speedFactor } = piece || { song: null, piece: null };
     const lastNote = song && song[ song.length - 1 ];
-    const duration = lastNote && (lastNote.time + lastNote.duration);
+    const duration = lastNote && (lastNote.time + lastNote.duration) + 3;
     const numberNotes = notes && notes.length;
 
     return <Container>

@@ -72,8 +72,8 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
         const { startTime } = song;
         const { timeDiff: { diff } } = getState();
         const forwardStart = startTime - Date.now() + diff;
-        countDown(forwardStart - 3000, 3, 1000, (i) => {
-            if (i === 0) {
+        countDown(forwardStart - 3000, 5, 1000, (i) => {
+            if (i === 3) {
                 setState({
                     status: GameStatus.Running,
                     timeTillLaunch: i,
