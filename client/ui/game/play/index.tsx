@@ -84,6 +84,7 @@ const UserNote = styled.button<{ note: string }>`
     color: #FFF;
     text-shadow: 0 0 10px black;
     border: 1px solid #000;
+    flex-shrink: 0;
 `;
 
 const CountDown = styled.div<{ timeTillLaunch: number }>`
