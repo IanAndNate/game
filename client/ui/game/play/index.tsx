@@ -20,30 +20,17 @@ const MusicContainer = styled.div<{ height: number }>`
     perspective-origin: bottom;
     flex-shrink: 0;
     flex-grow: 2;
+    transition: perspective 3s ease-out;
 `;
 
 const moveVertically = (duration: number) => keyframes`
     0% {
-        transform : translate3d(0, 0, 0);
+        transform : rotateX(45deg) translate3d(0, 0, 0);
     }
     100% {
-        transform: translate3d(0, ${duration * 500}px, 0);
+        transform: rotateX(45deg) translate3d(0, ${duration * 500}px, 0);
     }
 `;
-
-const MusicPageBackground = styled.div`
-    // background: repeating-linear-gradient(
-    //     to right,
-    //     #e6e6e6,
-    //     #e6e6e6 ${TRACK_WIDTH}px,
-    //     transparent ${TRACK_WIDTH}px,
-    //     transparent ${TRACK_WIDTH + 10}px
-    // );
-    transform : rotateX(45deg);
-    transform-origin: bottom;
-    position: absolute;
-    bottom: 0;
-`
 
 const MusicPage = styled.div<{ duration: number; numberNotes: number; started: boolean; speedFactor: number }>`
     height: ${({ duration }) => duration * 500}px;
@@ -51,6 +38,9 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     animation : ${({ duration }) => moveVertically(duration)} ${({ duration, speedFactor }) => duration * speedFactor}s linear;
     animation-play-state: ${({ started }) => started ? 'running' : 'paused'};
     animation-fill-mode: both;
+    transform-origin: bottom;
+    position: absolute;
+    bottom: 0;
 `;
 
 const NoteBar = styled('div')`
@@ -111,14 +101,16 @@ const Container = styled.div`
 export const Play = () => {
     const [{ piece, status, players, timeTillLaunch }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
-    const [targetHeight, setTargetHeight] = useState();
+    const [targetHeight, setTargetHeight] = useState(0);
     const renderTarget = useRef(null);
 
     useEffect(() => {
         if (renderTarget.current) {
-            setTargetHeight(renderTarget.current.clientHeight);
+            setTimeout(() => {
+                setTargetHeight(renderTarget.current.clientHeight);
+            }, 1000);
         }
-    }, [renderTarget])
+    }, [renderTarget]);
 
     const { song, notes, speedFactor } = piece || { song: null, piece: null };
     const lastNote = song && song[ song.length - 1 ];
@@ -130,27 +122,25 @@ export const Play = () => {
         <MusicContainer ref={renderTarget}
                         height={targetHeight}>
             <CountDown timeTillLaunch={timeTillLaunch}>{timeTillLaunch}</CountDown>
-            <MusicPageBackground>
-
-                <MusicPage numberNotes={numberNotes}
-                           duration={duration}
-                           speedFactor={speedFactor}
-                           started={status === GameStatus.Running}>
-                    {song && song
-                        .filter(({ key }) => !!key)
-                        .map(({ key, time, duration }, i) =>
-                            <Note key={i}
-                                  index={i}
-                                  time={time}
-                                  note={key}
-                                  duration={duration}/>
-                        )}
-                </MusicPage>
-            </MusicPageBackground>
+            <MusicPage numberNotes={numberNotes}
+                       duration={duration}
+                       speedFactor={speedFactor}
+                       started={status === GameStatus.Running}>
+                {song && song
+                    .filter(({ key }) => !!key)
+                    .map(({ key, time, duration }, i) =>
+                        <Note key={i}
+                              index={i}
+                              time={time}
+                              note={key}
+                              duration={duration}/>
+                    )}
+            </MusicPage>
         </MusicContainer>
         <NoteBar>
             {notes && notes.map(({ key }, i) =>
-                <UserNote note={key} value={key} onPointerDown={mouseDown} onPointerUp={mouseUp} key={i}>{key}</UserNote>
+                <UserNote note={key} value={key} onPointerDown={mouseDown} onPointerUp={mouseUp}
+                          key={i}>{key}</UserNote>
             )}
         </NoteBar>
     </Container>
