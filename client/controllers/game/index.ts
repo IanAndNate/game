@@ -10,6 +10,7 @@ const initialState: State = {
     players: [],
     timeDiff: { diff: 0, measures: [] },
     toneStarted: false,
+    timers: [],
 };
 
 type Actions = typeof actions;

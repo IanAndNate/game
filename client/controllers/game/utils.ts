@@ -21,9 +21,10 @@ function quartile(data: number[], q: number) {
 }
 
 export const countDown = (startTime:number, from:number, timeGap:number, callback: (i: number) => void) => {
-    return setTimeout(() => {;
+    let interval: NodeJS.Timer;
+    const timeout = setTimeout(() => {;
         callback(from);
-        const interval = setInterval(() => {
+        interval = setInterval(() => {
             from = from - 1;
             callback(from);
             if (from <= 0) {
@@ -31,4 +32,8 @@ export const countDown = (startTime:number, from:number, timeGap:number, callbac
             }
         }, timeGap);
     }, startTime);
+    return () => {
+        clearTimeout(timeout);
+        clearInterval(interval);
+    }
 }

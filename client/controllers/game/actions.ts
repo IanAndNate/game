@@ -70,9 +70,9 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
             piece: song,
         });
         const { startTime } = song;
-        const { timeDiff: { diff } } = getState();
+        const { timeDiff: { diff }, timers } = getState();
         const forwardStart = startTime - Date.now() + diff;
-        countDown(forwardStart - 3000, 5, 1000, (i) => {
+        const timer = countDown(forwardStart - 3000, 5, 1000, (i) => {
             if (i === 3) {
                 setState({
                     status: GameStatus.Running,
@@ -84,6 +84,8 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
                 });
             }
         });
+        timers.push(timer);
+        setState({ timers })
     });
     socket.on('alert', ({ message }) => {
         window.alert(message);
@@ -108,11 +110,16 @@ export const joinRoom = (roomId: string) => ({ getState, setState, dispatch }: S
 };
 
 export const leaveRoom = () => ({ getState, setState }: StoreActionApi<State>) => {
-    const { socket, roomId } = getState();
+    const { socket, timers } = getState();
     socket?.close();
+    timers.forEach((timer) => {
+        timer();
+    });
     setState({
         status: GameStatus.Disconnected,
         roomId: undefined,
+        timeDiff: { diff: 0, measures: [] },
+        timeTillLaunch: undefined
     });
 };
 

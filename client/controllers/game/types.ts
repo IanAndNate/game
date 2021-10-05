@@ -34,4 +34,5 @@ export interface State {
     players: Player[];
     toneStarted: boolean;
     timeTillLaunch?: number;
+    timers: Function[];
 }
