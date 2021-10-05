@@ -1,4 +1,4 @@
-import { createHook, createStore } from 'react-sweet-state';
+import { createHook, createStore, defaultRegistry } from 'react-sweet-state';
 import { GameStatus, State } from './types';
 import * as actions from './actions';
 import { useCallback, useEffect } from 'react';
@@ -14,6 +14,8 @@ type Actions = typeof actions;
 
 const store = createStore<State, Actions>({ initialState, actions });
 export const useGame = createHook<State, Actions>(store);
+
+export const getGameState = defaultRegistry.getStore(store).storeState.getState;
 
 export const useCreateAndJoinRoom = () => {
     const history = useHistory();
