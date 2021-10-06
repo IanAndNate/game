@@ -101,6 +101,7 @@ const Container = styled.div`
     top: 0;
     left: 0;
     box-sizing: border-box;
+    overflow: hidden;
 `
 
 const RoomContainer = styled.div`
