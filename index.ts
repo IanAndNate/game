@@ -1,13 +1,11 @@
 import express from 'express';
 import {createServer} from 'http';
 import { Server, Socket } from 'socket.io';
-import {readFile} from 'fs';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
-import { MidiJSON } from '@tonejs/midi';
-import { KeyPress, PlayerNote, Room } from './types';
+import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
-import { RoomInfo, NextRoundProps, RoundInfo } from './client/controllers/game/types';
+import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote } from './client/shared/types';
 
 const app = express();
 
