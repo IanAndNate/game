@@ -41,6 +41,8 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     transform-origin: bottom;
     position: absolute;
     bottom: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 `;
 
 const NoteBar = styled('div')`
