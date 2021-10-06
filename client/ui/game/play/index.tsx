@@ -18,7 +18,6 @@ const MusicContainer = styled.div<{ height: number }>`
     display: flex;
     justify-content: center;
     perspective-origin: bottom;
-    flex-shrink: 0;
     flex-grow: 2;
     transition: perspective 3s ease-out;
 `;
@@ -43,6 +42,7 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     bottom: 0;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
 `;
 
 const NoteBar = styled('div')`
@@ -50,6 +50,7 @@ const NoteBar = styled('div')`
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 `;
 
 const Note = styled.span<{ time: number; duration: number; note: string; index: number; }>`
