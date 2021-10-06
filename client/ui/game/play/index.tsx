@@ -24,10 +24,10 @@ const MusicContainer = styled.div<{ height: number }>`
 
 const moveVertically = (duration: number) => keyframes`
     0% {
-        transform : rotateX(45deg) translate3d(0, 0, 0);
+        transform : scale(1) rotateX(45deg) translate3d(0, 0, 0);
     }
     100% {
-        transform: rotateX(45deg) translate3d(0, ${duration * 500}px, 0);
+        transform: scale(1) rotateX(45deg) translate3d(0, ${duration * 500}px, 0);
     }
 `;
 
@@ -43,6 +43,7 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     -webkit-transform-style: preserve-3d;
+    -webkit-transform: scale(1);
 `;
 
 const NoteBar = styled('div')`
