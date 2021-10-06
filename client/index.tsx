@@ -5,16 +5,28 @@ import { Admin } from "./ui/admin";
 import { Game } from "./ui/game";
 import { GameRouteProps } from "./ui/game/types";
 import { Welcome } from "./ui/welcome";
-import styled from "@emotion/styled";
+import { css, Global } from '@emotion/react';
 
-const Wrapper = styled.div`
-    font-family: sans-serif;
-    font-size: small;
-`;
+const GlobalStyles = () => <Global styles={css`
+    body {
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+    #root {
+        font-family: sans-serif;
+        font-size: small;
+        margin: 0 8px;
+        width: 100%;
+        height: 100%;
+    }
+`}/>
 
 const App = () => {
     return (
-        <Wrapper>
+        <>
+            <GlobalStyles />
             <BrowserRouter>
                 <Switch>
                     <Route exact path="/">
@@ -32,7 +44,7 @@ const App = () => {
                     </Route>
                 </Switch>
             </BrowserRouter>
-        </Wrapper>
+        </>
     );
 };
 

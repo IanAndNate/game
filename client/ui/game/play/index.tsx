@@ -5,11 +5,8 @@ import { Room } from '../../common/room';
 import styled from '@emotion/styled';
 import { LatencyPanel } from '../../common/latency-panel';
 import { keyframes } from '@emotion/react';
-
-const COLOURS = ['#774ED8', '#4996C8', '#6EB35E', '#ECD03F', '#F39C3C', '#EA5555', '#996236', '#F8B12C', '#ED732E',
-    '#9D221E', '#859D3C', '#382615', '#76B8E8', '#FBC968', '#E7624F', '#3FB0B4', '#F6F1C3', '#EBC9B9', '#E9AAA9', '#BF97B3', '#A17EA4'];
-
-const TRACK_WIDTH = 40;
+import { TRACK_WIDTH } from '../../common/note/constants';
+import { NoteBar, UserNote, Note } from '../../common/note/styled';
 
 const MusicContainer = styled.div<{ height: number }>`
     overflow: hidden;
@@ -47,45 +44,6 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     will-change: transform;
 `;
 
-const NoteBar = styled('div')`
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    padding-bottom: 10px;
-`;
-
-const Note = styled.span<{ time: number; duration: number; note: string; index: number; }>`
-    position: absolute;
-    padding: 10px;
-    box-sizing: border-box;
-    width: ${TRACK_WIDTH}px;
-    bottom: ${({ time }) => (time + 3) * 500}px;
-    height: ${({ duration }) => duration * 500}px;
-    background-color: ${({ note }) => COLOURS[ getPosition(note) % COLOURS.length ]};
-    left: ${({ note }) => getPosition(note) * (TRACK_WIDTH + 10)}px;
-    border-style: solid;
-    border-color: black;
-    border-width: 5px 1px;
-`;
-
-const UserNote = styled.button<{ note: string, isPressed: boolean }>`
-    width: ${TRACK_WIDTH}px;
-    height: ${TRACK_WIDTH}px;
-    margin-right: 10px;
-    background-color: ${({ note }) => COLOURS[ getPosition(note) % COLOURS.length ]};
-    font-size: 25px;
-    text-transform: uppercase;
-    color: #FFF;
-    text-shadow: 0 0 10px black;
-    border: 1px solid #000;
-    flex-shrink: 0;
-    padding: 0;
-    box-shadow: 0 0 5px 1px ${({ note, isPressed }) => isPressed ? COLOURS[ getPosition(note) % COLOURS.length ] : 'black'};
-    filter: brightness(${({ isPressed }) => isPressed ? '125%' : '75%'});
-`;
-
 const CountDown = styled.div<{ timeTillLaunch: number }>`
     position: absolute;
     z-index: 3;
@@ -100,15 +58,6 @@ const Container = styled.div`
     flex-direction: column;
     height: 100%;
     width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-sizing: border-box;
-    overflow: hidden;
-`
-
-const RoomContainer = styled.div`
-    padding: 0 10px 10px 10px;
 `
 
 export const Play = () => {
@@ -131,7 +80,7 @@ export const Play = () => {
     const numberNotes = notes && notes.length;
 
     return <Container>
-        <RoomContainer><Room players={players} disabled={false}><LatencyPanel/></Room></RoomContainer>
+        <Room players={players} disabled={false}><LatencyPanel/></Room>
         <MusicContainer ref={renderTarget}
                         height={targetHeight}>
             <CountDown timeTillLaunch={timeTillLaunch}>{timeTillLaunch}</CountDown>
@@ -157,18 +106,4 @@ export const Play = () => {
             )}
         </NoteBar>
     </Container>
-}
-
-let nextPosition = 0;
-
-const NOTE_POSITIONS: { [ note: string ]: number } = {}
-
-const getPosition = (note: string) => {
-    const existing = NOTE_POSITIONS[ note ];
-    if (typeof existing !== 'undefined') {
-        return existing;
-    }
-    NOTE_POSITIONS[ note ] = nextPosition;
-    nextPosition++;
-    return NOTE_POSITIONS[ note ];
 }
