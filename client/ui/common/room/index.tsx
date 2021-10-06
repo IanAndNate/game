@@ -1,5 +1,5 @@
 import React from "react";
-import { Player } from "../../../controllers/game/types";
+import { Player } from "../../../shared/types";
 import styled from "@emotion/styled";
 
 interface Props {

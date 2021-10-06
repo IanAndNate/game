@@ -1,11 +1,6 @@
 import { Socket } from 'socket.io-client';
 import { Sampler } from 'tone';
-
-interface Note {
-    key: string;
-    duration: number;
-    time: number;
-}
+import { PlayerNote, Note, Player } from '../../shared/types';
 
 export enum GameStatus {
     Disconnected = 'disconnected',
@@ -14,40 +9,6 @@ export enum GameStatus {
     Running = 'running',
     Guessing = 'guessing',
 }
-
-export interface Player {
-    id: string;
-    name: string;
-    isReady?: boolean;
-    isCurrent?: boolean;
-    isPressed?: boolean;
-}
-
-export interface RoomInfo {
-    roomId: string;
-    players: Player[];
-    currentRound: number;
-    totalRounds: number;
-}
-
-export interface NextRoundProps {
-    round: number;
-    speedFactor: number;
-}
-
-interface PlayerNote {
-    key: string;
-    note: string; // we should not send this to the client, really
-}
-export interface RoundInfo {
-    round: number;
-    speedFactor: number;
-    startTime: number;
-    totalDuration: number;
-    song: Note[];
-    notes: PlayerNote[];
-}
-
 interface Guess {
     attempt: string;
     isCorrect: boolean;
