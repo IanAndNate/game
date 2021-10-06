@@ -13,7 +13,7 @@ const TRACK_WIDTH = 40;
 
 const MusicContainer = styled.div<{ height: number }>`
     overflow: hidden;
-    perspective: ${({ height }) => height}px;
+    perspective: ${({ height }) => Math.round(height / 100) * 100}px;
     position: relative;
     display: flex;
     justify-content: center;
@@ -44,6 +44,7 @@ const MusicPage = styled.div<{ duration: number; numberNotes: number; started: b
     -webkit-backface-visibility: hidden;
     -webkit-transform-style: preserve-3d;
     -webkit-transform: scale(1);
+    will-change: transform;
 `;
 
 const NoteBar = styled('div')`
@@ -52,6 +53,7 @@ const NoteBar = styled('div')`
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    padding-bottom: 10px;
 `;
 
 const Note = styled.span<{ time: number; duration: number; note: string; index: number; }>`
@@ -98,8 +100,11 @@ const Container = styled.div`
     position: absolute;
     top: 0;
     left: 0;
-    padding: 0 10px 10px 10px;
     box-sizing: border-box;
+`
+
+const RoomContainer = styled.div`
+    padding: 0 10px 10px 10px;
 `
 
 export const Play = () => {
@@ -122,7 +127,7 @@ export const Play = () => {
     const numberNotes = notes && notes.length;
 
     return <Container>
-        <Room players={players} disabled={false}><LatencyPanel/></Room>
+        <RoomContainer><Room players={players} disabled={false}><LatencyPanel/></Room></RoomContainer>
         <MusicContainer ref={renderTarget}
                         height={targetHeight}>
             <CountDown timeTillLaunch={timeTillLaunch}>{timeTillLaunch}</CountDown>
