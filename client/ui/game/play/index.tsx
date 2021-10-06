@@ -70,7 +70,7 @@ const Note = styled.span<{ time: number; duration: number; note: string; index: 
     border-width: 5px 1px;
 `;
 
-const UserNote = styled.button<{ note: string }>`
+const UserNote = styled.button<{ note: string, isPressed: boolean }>`
     width: ${TRACK_WIDTH}px;
     height: ${TRACK_WIDTH}px;
     margin-right: 10px;
@@ -82,6 +82,8 @@ const UserNote = styled.button<{ note: string }>`
     border: 1px solid #000;
     flex-shrink: 0;
     padding: 0;
+    box-shadow: 0 0 5px 1px ${({ note, isPressed }) => isPressed ? COLOURS[ getPosition(note) % COLOURS.length ] : 'black'};
+    filter: brightness(${({ isPressed }) => isPressed ? '125%' : '75%'});
 `;
 
 const CountDown = styled.div<{ timeTillLaunch: number }>`
@@ -110,7 +112,7 @@ const RoomContainer = styled.div`
 `
 
 export const Play = () => {
-    const [{ piece, status, players, timeTillLaunch }, { mouseDown, mouseUp }] = useGame();
+    const [{ piece, status, players, keysDown, timeTillLaunch }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
     const [targetHeight, setTargetHeight] = useState(0);
     const renderTarget = useRef(null);
@@ -151,7 +153,7 @@ export const Play = () => {
         <NoteBar>
             {notes && notes.map(({ key }, i) =>
                 <UserNote note={key} value={key} onPointerDown={mouseDown} onPointerUp={mouseUp}
-                          key={i}>{key}</UserNote>
+                          key={i} isPressed={keysDown.has(key)}>{key}</UserNote>
             )}
         </NoteBar>
     </Container>
