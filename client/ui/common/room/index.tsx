@@ -27,7 +27,7 @@ const PlayerList = styled.div`
     display: flex;
     flex-wrap: wrap;
 `;
-const Player = styled.span<{ isCurrent: boolean; isPressed: boolean }>`
+const Player = styled.span<{ isCurrent: boolean; isPressed: boolean; isReady: boolean }>`
     border: 1px solid ${(props) => (props.isPressed ? "#b77" : "#7b9")};
     box-sizing: border-box;
     border-radius: 3px;
@@ -35,6 +35,7 @@ const Player = styled.span<{ isCurrent: boolean; isPressed: boolean }>`
     padding: 4px;
     margin: 4px;
     font-weight: ${(props) => (props.isCurrent ? 800 : undefined)};
+    filter: brightness(${({ isReady }) => isReady ? '100%' : '80%'});
 `;
 const Action = styled.span`
     padding: 2px;
@@ -48,6 +49,7 @@ export const Room = ({ players, disabled, action, children }: Props) => {
                     <Player
                         key={player.id}
                         isCurrent={player.isCurrent}
+                        isReady={player.isReady}
                         isPressed={player.isPressed}
                     >
                         {player.name}

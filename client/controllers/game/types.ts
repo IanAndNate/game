@@ -10,22 +10,53 @@ interface Note {
 export enum GameStatus {
     Disconnected = 'disconnected',
     Lobby = 'lobby',
-    Loading = 'loading',
     Starting = 'starting',
     Running = 'running',
+    Guessing = 'guessing',
 }
 
 export interface Player {
     id: string;
     name: string;
+    isReady?: boolean;
     isCurrent?: boolean;
     isPressed?: boolean;
+}
+
+export interface RoomInfo {
+    roomId: string;
+    players: Player[];
+    currentRound: number;
+    totalRounds: number;
+}
+
+export interface NextRoundProps {
+    round: number;
+    speedFactor: number;
+}
+
+interface PlayerNote {
+    key: string;
+    note: string; // we should not send this to the client, really
+}
+export interface RoundInfo {
+    round: number;
+    speedFactor: number;
+    startTime: number;
+    totalDuration: number;
+    song: Note[];
+    notes: PlayerNote[];
+}
+
+interface Guess {
+    attempt: string;
+    isCorrect: boolean;
 }
 
 export interface State {
     roomId?: string;
     socket?: Socket;
-    piece?: { notes: Note[], song: Note[], startTime: number, speedFactor: number };
+    piece?: { notes: PlayerNote[], song: Note[], startTime: number, totalDuration: number, speedFactor: number };
     status: GameStatus;
     synth?: Sampler;
     latency?: number;
@@ -35,4 +66,7 @@ export interface State {
     toneStarted: boolean;
     timeTillLaunch?: number;
     timers: Function[];
+    currentRound?: number;
+    totalRounds?: number;
+    guesses: Guess[];
 }

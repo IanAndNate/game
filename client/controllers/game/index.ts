@@ -11,6 +11,7 @@ const initialState: State = {
     timeDiff: { diff: 0, measures: [] },
     toneStarted: false,
     timers: [],
+    guesses: [],
 };
 
 type Actions = typeof actions;

@@ -1,14 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Player } from "../../../controllers/game/types";
+import { RoomInfo } from "../../../controllers/game/types";
 import styled from "@emotion/styled";
 import { useCreateAndJoinRoom } from "../../../controllers/game";
 import { Room, RoomWrapper } from "../../common/room";
-
-interface RoomInfo {
-    players: Player[];
-    roomId: string;
-    started: boolean;
-}
 
 const Wrapper = styled.div`
     button {
@@ -46,13 +40,13 @@ export const Rooms = () => {
     }
     return (
         <Wrapper>
-            {rooms.map(({ roomId, started, players }) => (
+            {rooms.map(({ roomId, currentRound, players }) => (
                 <Room
                     key={roomId}
                     players={players}
-                    disabled={started}
+                    disabled={currentRound !== -1}
                     action={
-                        started ? (
+                        currentRound !== -1 ? (
                             <>Game in progress</>
                         ) : (
                             <a href={`/game/${roomId}`}>join game</a>

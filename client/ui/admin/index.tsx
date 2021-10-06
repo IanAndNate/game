@@ -3,6 +3,7 @@ import React, { FormEvent, useEffect, useRef, useState } from 'react';
 interface SongInfo {
     fileName: string;
     enabled: boolean;
+    songNames: string[];
 }
 
 interface SongProps {
@@ -10,7 +11,7 @@ interface SongProps {
     onChange: (song: SongInfo) => void;
 }
 
-const Song = ({ song: { fileName, enabled }, onChange }: SongProps) => {
+const Song = ({ song: { fileName, enabled, songNames }, onChange }: SongProps) => {
     const toggle = async () => {
         await fetch(`/songs/${fileName}`, { 
             method: 'PATCH', headers: {
@@ -21,11 +22,13 @@ const Song = ({ song: { fileName, enabled }, onChange }: SongProps) => {
         onChange({
             fileName,
             enabled: !enabled,
+            songNames,
         });
     }
+    // TODO ability to manage song names
     return (<li>
         <input type="checkbox" checked={enabled} onChange={toggle} id={fileName}/>
-        <label htmlFor={fileName}>{fileName}</label>
+        <label htmlFor={fileName}>{fileName} [{songNames.join(',')}]</label>
     </li>)
 };
 
@@ -81,5 +84,6 @@ export const Admin = () => {
                 <button type="submit" disabled={url.length < 8}>add MIDI from URL</button>
             </form>
         </div>
+        <a href="/">go home</a>
     </>);
 }
