@@ -5,17 +5,54 @@ import fetch from 'node-fetch';
 import { Song } from './types';
 import { RequestHandler } from 'express-serve-static-core';
 import express from 'express';
+import fs from 'fs';
 
 export const songs: Song[] = [];
 
-const getSongs: RequestHandler = (req, res) => {
+interface SongDef {
+    fileName: string;
+    songNames: string[];
+}
+
+const INITIAL_SONGS: SongDef[] = [
+    {
+        fileName: 'amazgrac04.mid',
+        songNames: ['amazing grace'],        
+    },
+    {
+        fileName: 'tetris.mid',
+        songNames: ['tetris', 'korobeiniki'],
+    },
+    {
+        fileName: 'pirates.mid',
+        songNames: ['pirates of the carribean', 'hes a pirate'],
+    },
+];
+
+const initSongs = () => {
+    fs.readdirSync('./midi').forEach((file) => {
+        if (file.endsWith('.mid')) {
+            const data = fs.readFileSync(`./midi/${file}`);
+            const song = parseMidi(file, data);
+            const songDef = INITIAL_SONGS.find(s => s.fileName === file);
+            songs.push({
+                ...song,
+                enabled: songDef !== undefined,
+                songNames: songDef?.songNames || [],                
+            });
+        }
+    });
+}
+
+const getSongs: RequestHandler = (_req, res) => {
     res.send(JSON.stringify(songs.map(song => ({
         fileName: song.fileName,
+        songNames: song.songNames,
         enabled: song.enabled,
     }))));
 }
 
-const parseMidi = (fileName: string, data: ArrayBuffer) => {
+const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
     const midiArray = new Midi.Midi(data);
     const notes = midiArray.tracks.reduce((acc, track) => {
         // if (track.instrument.family !== 'piano') {
@@ -32,7 +69,7 @@ const parseMidi = (fileName: string, data: ArrayBuffer) => {
     const uniqueNotes = notes.filter((value, index, self) => {
         return self.findIndex((orig) => orig.name === value.name) === index;
     });
-    return { fileName, midiArray, uniqueNotes, music: notes, enabled: true };
+    return { fileName, midiArray, uniqueNotes, music: notes, enabled: true, songNames: [] };
 };
 
 const addSong = (name: string, data: ArrayBuffer) => {
@@ -93,9 +130,16 @@ const patchSong: RequestHandler = (req, res) => {
         res.status(404).send('No such song').end();
         return;
     }
-    song.enabled = req.body.enabled;
+    if (req.body.enabled !== undefined) {
+        song.enabled = req.body.enabled;
+    }
+    if (Array.isArray(req.body.songNames)) {
+        song.songNames = req.body.songNames;
+    }
     res.status(204).end();
 }
+
+initSongs();
 
 export const songsRouter = Router();
 

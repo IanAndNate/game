@@ -61,7 +61,7 @@ const Container = styled.div`
 `
 
 export const Play = () => {
-    const [{ piece, status, players, keysDown, timeTillLaunch }, { mouseDown, mouseUp }] = useGame();
+    const [{ piece, status, players, keysDown, timeTillLaunch, currentRound, totalRounds }, { mouseDown, mouseUp }] = useGame();
     useKeyboard();
     const [targetHeight, setTargetHeight] = useState(0);
     const renderTarget = useRef(null);
@@ -80,6 +80,7 @@ export const Play = () => {
     const numberNotes = notes && notes.length;
 
     return <Container>
+        <h2>Round {currentRound + 1} / {totalRounds}</h2>
         <Room players={players} disabled={false}><LatencyPanel/></Room>
         <MusicContainer ref={renderTarget}
                         height={targetHeight}>

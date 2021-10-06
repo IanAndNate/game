@@ -7,6 +7,7 @@ import { songsRouter, songs } from './songs.js';
 import { MidiJSON } from '@tonejs/midi';
 import { KeyPress, PlayerNote, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
+import { RoomInfo, NextRoundProps, RoundInfo } from './client/controllers/game/types';
 
 const app = express();
 
@@ -15,26 +16,30 @@ app.use(express.static(`static`));
 
 const rooms: Room[] = [];
 
-app.get('/new', (req, res) => {
+app.get('/new', (_req, res) => {
     const roomId = uuidv4();
-    const newRoom: Room = { roomId, players: [], song: null }
-    rooms.push(newRoom);
-    res.send({roomId: newRoom.roomId});
-});
-
-app.get('/rooms', (_req, res) => {
-    res.send(rooms.map(room => ({
-        ...room,
-        players: room.players.map(player => ({
-            ...player,
-            notes: undefined,
+    // TODO generate a song list dynamically
+    const enabledSongs = songs.filter(s => s.enabled);
+    if (enabledSongs.length === 0) {
+        res.status(500).send('No songs enabled on server').end();
+        return;
+    }
+    const newRoom: Room = { roomId, players: [], rounds: enabledSongs.map(song => ({
+            song,
+            guesses: [],
         })),
-        song: undefined,
-        started: !!room.song,
-    })));
+        currentRound: -1,
+    };
+    
+    rooms.push(newRoom);
+    res.send({ roomId: newRoom.roomId });
 });
 
-app.get('*', function (req, res) {
+app.get('/rooms', (_req, res) => {    
+    res.send(rooms.map(room => getRoomInfo(room)));
+});
+
+app.get('*', function (_req, res) {
     res.sendFile('static/index.html', {root: '.'});
 });
 
@@ -45,54 +50,6 @@ const port = process.env.PORT || 3000;
 
 index.listen(port, () => {
     console.log(`listening on *:${port}`);
-});
-
-readFile("midi/2289444_1.json", function (err, data) {
-    // Parse the obtainer base64 string ...
-    const midiArray: MidiJSON = JSON.parse(data.toString());
-    const notes = midiArray.tracks[0].notes;
-
-    const uniqueNotes = notes.filter((value, index, self) => {
-        return self.findIndex((orig) => orig.name === value.name) === index;
-    });
-
-    songs.push({ fileName: '2289444_1.mid', midiArray, uniqueNotes, music: notes, enabled: true });
-});
-
-readFile("midi/pirates.json", function (err, data) {
-    // Parse the obtainer base64 string ...
-    const midiArray: MidiJSON = JSON.parse(data.toString());
-    const notes = midiArray.tracks[0].notes
-
-    const uniqueNotes = notes.filter((value, index, self) => {
-        return self.findIndex((orig) => orig.name === value.name) === index;
-    });
-
-    songs.push({ fileName: 'pirates.mid', midiArray, uniqueNotes, music: notes, enabled: true });
-});
-
-readFile("midi/amazgrac04.json", function (err, data) {
-    // Parse the obtainer base64 string ...
-    const midiArray: MidiJSON = JSON.parse(data.toString());
-    const notes = midiArray.tracks[0].notes
-
-    const uniqueNotes = notes.filter((value, index, self) => {
-        return self.findIndex((orig) => orig.name === value.name) === index;
-    });
-
-    songs.unshift({ fileName: 'amazgrac04.mid', midiArray, uniqueNotes, music: notes, enabled: true });
-});
-
-readFile("midi/tetris.json", function (err, data) {
-    // Parse the obtainer base64 string ...
-    const midiArray: MidiJSON = JSON.parse(data.toString());
-    const notes = midiArray.tracks[0].notes
-
-    const uniqueNotes = notes.filter((value, index, self) => {
-        return self.findIndex((orig) => orig.name === value.name) === index;
-    });
-
-    songs.push({ fileName: 'tetris.mid', midiArray, uniqueNotes, music: notes, enabled: true });
 });
 
 const KEYBOARD_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '/'];
@@ -131,13 +88,20 @@ const getRoomId = (socket: Socket) => {
     }
 }
 
-const playersBroadcast = (room: Room) => {
+const getRoomInfo = (room: Room, playerId?: string): RoomInfo => ({
+    roomId: room.roomId,
+    currentRound: room.currentRound,
+    totalRounds: room.rounds.length,
+    players: room.players.map(p => ({
+        ...p,
+        notes: undefined,
+        isCurrent: p.id === playerId,
+    })),
+});
+
+const roomInfoBroadcast = (room: Room) => {
     room.players.forEach((player) => {
-        io.to(player.id).emit('players', room.players.map(p => ({
-            ...p,
-            isCurrent: p.id === player.id,
-            notes: undefined,
-        })));
+        io.to(player.id).emit('room info', getRoomInfo(room, player.id));
     });
 }
 
@@ -153,7 +117,7 @@ io.on('connection', (socket) => {
             if (room.players.length === 0) {
                 rooms.splice(roomIndex, 1);
             } else {
-                playersBroadcast(room);
+                roomInfoBroadcast(room);
             }
         }
     });
@@ -175,30 +139,33 @@ io.on('connection', (socket) => {
                     separator: ' ',
                     style: 'capital',
                 }),
+                isReady: false,
             });
-            playersBroadcast(room);
+            roomInfoBroadcast(room);
         } else {
             socket.emit('abort');
         }
     });
 
-    socket.on('request start game', ({ speedFactor }: { speedFactor: number }) => {
+    socket.on('request start round', ({ speedFactor, round }: NextRoundProps) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
 
         if (room) {
             const { players } = room;
-            const enabledSongs = songs.filter(s => s.enabled);
-            if (enabledSongs.length === 0) {
-                players.forEach((player) => {
-                    io.to(player.id).emit('alert', { message: 'No songs enabled on server :(' });
-                });
-                return;
+            if (room.currentRound + 1 !== round || round >= room.rounds.length) {
+                return; // already starting?
             }
-            const song = enabledSongs[getRandomNumber(0, enabledSongs.length - 1)];
+            const player = room.players.find((player) => player.id === socket.id);
+            player.isReady = true;
+            if (!room.players.every(p => p.isReady)) {
+                roomInfoBroadcast(room);
+                return; // not everyone is ready yet, but broadcast the updated readiness
+            }
+            room.currentRound = round;
+            const song = room.rounds[room.currentRound].song;
             // console.log('starting game with', song.fileName);
             const { uniqueNotes } = song;
-            room.song = song;
             const playerNumber = players.length;
             uniqueNotes.forEach((note, i) => {
                 // 0, 1, 2, 3, 4, 5
@@ -211,11 +178,24 @@ io.on('connection', (socket) => {
                 })
             });
             const startTime = Date.now() + 10000;
+            const totalDuration = Math.max(...song.music.map(note => note.time + note.duration)) * 1000;
+           
             players.forEach((player) => {
-                io.to(player.id).emit('start game', { speedFactor, notes: player.notes, song: song.music.map(({name, time, duration}) => {
-                    const matched = player.notes.find((mapped) => mapped.note === name);
-                    return {key: matched && matched.key || '', time, duration }
-                }), startTime });
+                const roundInfo: RoundInfo = {
+                    speedFactor,
+                    notes: player.notes,
+                    song: song.music.map(({name, time, duration}) => {
+                        const matched = player.notes.find((mapped) => mapped.note === name);
+                        return {key: matched && matched.key || '', time, duration }
+                    }),
+                    startTime,
+                    totalDuration,
+                    round: room.currentRound,
+                }
+                io.to(player.id).emit('start round', roundInfo);
+                // reset players readiness (for guessing)
+                // XXX the problem with this is if a player disconnects, it will broadcast this to all other players...
+                player.isReady = false;
             });
         }
     });
@@ -246,5 +226,23 @@ io.on('connection', (socket) => {
         if (typeof cb === "function") {
             cb(Date.now());
         }
+    });
+
+    socket.on("guess", (guess, cb) => {
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+        if (!room || room.currentRound < 0) {
+            return;
+        }
+        const player = room.players.find((player) => player.id === socket.id);
+        // just ignore all non-alphanumeric characters
+        const sanitise = (name: string): string => name.toLowerCase().replace(/[^0-9a-z]/g, '');
+        const isCorrect = room.rounds[room.currentRound].song.songNames.map(sanitise).includes(sanitise(guess));
+        room.rounds[room.currentRound].guesses.push({
+            playerId: player.id,
+            guess,
+            isCorrect,
+        });
+        cb(isCorrect);
     });
 });
