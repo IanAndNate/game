@@ -1,5 +1,6 @@
 import { MidiJSON } from '@tonejs/midi';
 import { TrackJSON } from '@tonejs/midi';
+import { PlayerNote } from './client/shared/types';
 
 interface Guess {
     guess: string;
@@ -12,7 +13,7 @@ interface Round {
 }
 export interface Room {
     roomId: string;
-    players: Player[];
+    players: ServerPlayer[];
     rounds: Round[];
     currentRound: number;
 }
@@ -26,16 +27,11 @@ export interface Song {
     songNames: string[];
 }
 
-export interface Player {
+export interface ServerPlayer {
     id: string;
     name: string;
     notes: PlayerNote[];
     isReady: boolean;
-}
-
-export interface PlayerNote {
-    note: string;
-    key: string;
 }
 
 export interface KeyPress {

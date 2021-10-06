@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { RoomInfo } from "../../../controllers/game/types";
+import { RoomInfo } from "../../../shared/types";
 import styled from "@emotion/styled";
 import { useCreateAndJoinRoom } from "../../../controllers/game";
 import { Room, RoomWrapper } from "../../common/room";
