@@ -1,17 +1,24 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { SongInfo } from '../../shared/types';
+import styled from '@emotion/styled';
 
-interface SongInfo {
-    fileName: string;
-    enabled: boolean;
-    songNames: string[];
-}
+const SongRow = styled.tr`
+    input[type=text] {
+        width: 20vw;
+    }
+`;
 
 interface SongProps {
     song: SongInfo;
-    onChange: (song: SongInfo) => void;
+    onChange: (song: Partial<SongInfo>) => void;
 }
 
-const Song = ({ song: { fileName, enabled, songNames }, onChange }: SongProps) => {
+const Song = ({ song, onChange }: SongProps) => {
+    const { fileName, enabled, songNames, uniqueNotes, totalNotes, duration } = song;
+    const [updatedSongNames, setUpdatedSongNames] = useState<string>(songNames.join(','));
+    useEffect(() => {
+        setUpdatedSongNames(songNames.join(','));
+    }, [songNames]);
     const toggle = async () => {
         await fetch(`/songs/${fileName}`, { 
             method: 'PATCH', headers: {
@@ -20,16 +27,38 @@ const Song = ({ song: { fileName, enabled, songNames }, onChange }: SongProps) =
             body: JSON.stringify({ enabled: !enabled }),
         });
         onChange({
-            fileName,
+            ...song,
             enabled: !enabled,
-            songNames,
         });
-    }
+    };
+    const saveSongNames = (e: React.FormEvent) => {
+        e.preventDefault();
+        const doPatch = async () => {
+        const cleaned = updatedSongNames.split(',').map(s => s.toLowerCase().trim());
+            await fetch(`/songs/${fileName}`, {
+                method: 'PATCH', headers: {
+                    'Content-type': 'application/json',
+                },
+                body: JSON.stringify({ songNames: cleaned }),
+            });
+            onChange({
+                ...song,
+                songNames: cleaned,
+            });
+        }
+        doPatch();
+    };
     // TODO ability to manage song names
-    return (<li>
-        <input type="checkbox" checked={enabled} onChange={toggle} id={fileName}/>
-        <label htmlFor={fileName}>{fileName} [{songNames.join(',')}]</label>
-    </li>)
+    return (<SongRow>
+        <td><input type="checkbox" checked={enabled} onChange={toggle} id={fileName}/></td>
+        <td><label htmlFor={fileName}>{fileName}</label></td>
+        <td>{uniqueNotes}</td>
+        <td>{totalNotes}</td>
+        <td>{Math.floor(duration)}s</td>
+        <td><form onSubmit={saveSongNames}><input type="text" value={updatedSongNames} onChange={(e) => {
+            setUpdatedSongNames(e.target.value);
+        }}/><input type="submit" value="save" disabled={updatedSongNames === songNames.join(',')}/></form></td>
+    </SongRow>)
 };
 
 export const Admin = () => {
@@ -48,7 +77,6 @@ export const Admin = () => {
         setSongs([]);
     }
     const uploadSong = async (ev: React.ChangeEvent<HTMLInputElement>) => {
-        console.log(ev.target.value);
         const formData = new FormData();
         [...ev.target.files].forEach(file => {
             formData.append('song', file, file.name);
@@ -74,7 +102,21 @@ export const Admin = () => {
     }
     return (<>
         <h3>Manage song list</h3>
-        <ul>{songs.map(s => <Song key={s.fileName} song={s} onChange={updateSong} />)}</ul>
+        <table>
+            <thead>
+                <tr>
+                    <th>enabled</th>
+                    <th>file name</th>
+                    <th># unique notes</th>
+                    <th># total notes</th>
+                    <th>duration</th>
+                    <th>valid song names</th>
+                </tr>
+            </thead>
+            <tbody>                
+                {songs.map(s => <Song key={s.fileName} song={s} onChange={updateSong} />)}
+            </tbody>
+        </table>
         <button onClick={purge}>unload all songs</button>
         <button onClick={upload}>upload MIDI files</button>
         <input ref={fileRef} style={{ display: 'none' }} type="file" id="song" name="song" onChange={uploadSong} multiple />

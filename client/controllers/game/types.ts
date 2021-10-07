@@ -30,4 +30,5 @@ export interface State {
     currentRound?: number;
     totalRounds?: number;
     guesses: Guess[];
+    escapeCount: number;
 }

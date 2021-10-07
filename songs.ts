@@ -6,6 +6,7 @@ import { Song } from './types';
 import { RequestHandler } from 'express-serve-static-core';
 import express from 'express';
 import fs from 'fs';
+import { SongInfo } from './client/shared/types';
 
 export const songs: Song[] = [];
 
@@ -45,19 +46,24 @@ const initSongs = () => {
 }
 
 const getSongs: RequestHandler = (_req, res) => {
-    res.send(JSON.stringify(songs.map(song => ({
+    res.send(JSON.stringify(songs.map<SongInfo>(song => ({
         fileName: song.fileName,
         songNames: song.songNames,
         enabled: song.enabled,
+        uniqueNotes: song.uniqueNotes.length,
+        totalNotes: song.music.length,
+        duration: Math.max(...song.music.map(n => n.time + n.duration)),
     }))));
 }
 
+const EXCLUDED_MIDI_FAMILIES = ['drums', 'percussive', 'synth effects', 'synth lead', 'synth pad', 'sound effects'];
 const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
     const midiArray = new Midi.Midi(data);
+    console.log(midiArray.tracks.map(t => t.instrument.family));
     const notes = midiArray.tracks.reduce((acc, track) => {
-        // if (track.instrument.family !== 'piano') {
-        //     return acc;
-        // }
+        if (EXCLUDED_MIDI_FAMILIES.includes(track.instrument.family)) {
+            return acc;
+        }
         return [
             ...acc,
             ...track.notes,

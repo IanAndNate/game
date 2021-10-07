@@ -87,6 +87,24 @@ const getRoomId = (socket: Socket) => {
     }
 }
 
+function shuffle<T>(array: T[]): T[] {
+    let currentIndex = array.length, randomIndex;
+  
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  
+    return array;
+}
+
 const getRoomInfo = (room: Room, playerId?: string): RoomInfo => ({
     roomId: room.roomId,
     currentRound: room.currentRound,
@@ -216,6 +234,19 @@ io.on('connection', (socket) => {
         roomInfoBroadcast(room);
     });
 
+    socket.on('request abort round', () => {
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+
+        if (!room) {
+            return;
+        }
+
+        room.botTimers.forEach(clearTimeout);
+        room.botTimers = [];
+        io.to(room.roomId).emit('abort round');
+    });
+
     socket.on('request start round', ({ speedFactor, round }: NextRoundProps) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
@@ -231,19 +262,24 @@ io.on('connection', (socket) => {
                 roomInfoBroadcast(room);
                 return; // not everyone is ready yet, but broadcast the updated readiness
             }
+            // start a new round, clear stuff from previous round
             room.currentRound = round;
+            room.players.forEach(p => p.notes = []);
+            room.botTimers.forEach(clearTimeout);
+            room.botTimers = [];
+
             const song = room.rounds[room.currentRound].song;
-            // console.log('starting game with', song.fileName);
             const { uniqueNotes } = song;
             const playerNumber = players.length;
+            const shuffledPlayers = shuffle([...players]);
             uniqueNotes.forEach((note, i) => {
                 // 0, 1, 2, 3, 4, 5
                 // 1
                 const insertIndex = i % playerNumber;
-                players[insertIndex].notes = players[insertIndex].notes || [];
-                players[insertIndex].notes.push({
+                shuffledPlayers[insertIndex].notes = shuffledPlayers[insertIndex].notes || [];
+                shuffledPlayers[insertIndex].notes.push({
                     note: note.name,
-                    key: KEYBOARD_KEYS[players[insertIndex].notes.length]
+                    key: KEYBOARD_KEYS[shuffledPlayers[insertIndex].notes.length]
                 })
             });
             const startTime = Date.now() + 10000;

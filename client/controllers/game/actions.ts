@@ -41,6 +41,9 @@ const initSynth =
         sampler.toDestination();
 
         await Tone.loaded();
+        setState({
+            synth: sampler,
+        });
 
         const { socket } = getState();
         socket.on("keydown broadcast", (e: KeyPress) => {
@@ -120,6 +123,7 @@ export const joinRoom =
                         ...p,
                         isReady: p.isBot || false, // reset readiness when starting to guess
                     })),
+                    timers: [],
                 });
             }, forwardStart + (totalDuration * speedFactor) + 3000);
             timers.push(() => clearTimeout(endTimer));
@@ -129,7 +133,6 @@ export const joinRoom =
             window.alert(message);
         });
         socket.on("room info", (roomInfo: RoomInfo) => {
-            console.log("got room info", roomInfo);
             setState({
                 ...roomInfo,
             });
@@ -139,6 +142,22 @@ export const joinRoom =
                 status: GameStatus.Disconnected,
             });
         });
+
+        socket.on("abort round", () => {
+            const { players, synth, timers } = getState();
+            synth?.releaseAll();
+            timers.forEach(clear => clear());
+            setState({
+                status: GameStatus.Guessing,
+                guesses: [],
+                players: players.map((p) => ({
+                    ...p,
+                    isReady: p.isBot || false, // reset readiness when starting to guess
+                    isPressed: false,
+                })),
+                timers: [],
+            });
+        })
 
         setState({
             socket,
@@ -210,7 +229,18 @@ export const ping =
 export const keyDown =
     (e: KeyboardEvent) =>
     async ({ getState, setState }: StoreActionApi<State>) => {
-        const { keysDown, socket, toneStarted } = getState();
+        const { keysDown, socket, toneStarted, status, escapeCount } = getState();
+        if (e.key === 'Escape' && [GameStatus.Starting, GameStatus.Running].includes(status)) {
+            if (escapeCount === 4) { // backdoor: hit escape consecutively 5 times to abort a round...
+                socket?.emit('request abort round');
+                return;
+            } else {
+                setState({
+                    escapeCount: escapeCount + 1,
+                });
+                return;
+            }
+        }
         if (!toneStarted) {
             await Tone.start();
             setState({
@@ -220,7 +250,7 @@ export const keyDown =
         if (!keysDown.has(e.key)) {
             socket.emit("keydown", e.key);
             keysDown.add(e.key);
-            setState({ keysDown });
+            setState({ keysDown, escapeCount: 0 });
         }
     };
 
