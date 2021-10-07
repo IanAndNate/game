@@ -5,7 +5,7 @@ import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
-import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote } from './client/shared/types';
+import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player } from './client/shared/types';
 
 const app = express();
 
@@ -27,6 +27,7 @@ app.get('/new', (_req, res) => {
             guesses: [],
         })),
         currentRound: -1,
+        botTimers: [],
     };
     
     rooms.push(newRoom);
@@ -98,8 +99,54 @@ const getRoomInfo = (room: Room, playerId?: string): RoomInfo => ({
 });
 
 const roomInfoBroadcast = (room: Room) => {
-    room.players.forEach((player) => {
+    room.players.filter(p => !p.isBot).forEach((player) => {
         io.to(player.id).emit('room info', getRoomInfo(room, player.id));
+    });
+}
+
+const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.9) => {
+    const { startTime, song, notes, speedFactor } = round;
+    const startDelay = startTime - Date.now() + 1000 * speedFactor; // not sure why this 1 sec delay exists
+    song.forEach((note) => {
+        let noteKey = note.key;
+        if (noteKey === '') {
+            return;
+        }
+        if (Math.random() > accuracy) {
+            // pick a different key
+            noteKey = notes[getRandomNumber(0, notes.length - 1)].key;
+            if (noteKey === note.key) {
+                // just skip the note entirely
+                return;
+            }
+        }
+        const n = notes.find(playerNote => playerNote.key === noteKey);
+        if (!n) {
+            return;
+        }
+        // add some variation to start/end times
+        const noteTime = note.time + Math.random() * (1 - accuracy) - accuracy;
+        const noteDuration = note.duration * (accuracy + 2 * Math.random() * (1 - accuracy))
+        if (noteDuration <= 0) {
+            return;
+        }
+
+        const startNote = setTimeout(() => {
+            const keyPress: KeyPress = {
+                note: n.note,
+                playerId: bot.id,
+            };
+            io.to(room.roomId).emit('keydown broadcast', keyPress);
+        }, startDelay + noteTime * 1000 * speedFactor);
+        const endNote = setTimeout(() => {
+            const keyPress: KeyPress = {
+                note: n.note,
+                playerId: bot.id,
+            };
+            io.to(room.roomId).emit('keyup broadcast', keyPress);
+        }, startDelay + (noteTime + noteDuration) * 1000 * speedFactor);
+        room.botTimers.push(startNote);
+        room.botTimers.push(endNote);
     });
 }
 
@@ -112,7 +159,9 @@ io.on('connection', (socket) => {
         if (room) {
             room.players = room.players || [];
             room.players = room.players.filter(({ id }) => id !== socket.id);
-            if (room.players.length === 0) {
+            if (room.players.filter(p => !p.isBot).length === 0) {
+                // clear all bot timers when closing a room
+                room.botTimers.forEach((t) => clearTimeout(t));
                 rooms.splice(roomIndex, 1);
             } else {
                 roomInfoBroadcast(room);
@@ -138,11 +187,33 @@ io.on('connection', (socket) => {
                     style: 'capital',
                 }),
                 isReady: false,
+                isBot: false,
             });
             roomInfoBroadcast(room);
         } else {
             socket.emit('abort');
         }
+    });
+
+    socket.on('add bot', () => {
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+
+        if (!room) {
+            return;
+        }
+        room.players.push({
+            id: uuidv4(),
+            notes: [],
+            name: `${uniqueNamesGenerator({
+                dictionaries: [adjectives, animals],
+                separator: ' ',
+                style: 'capital',
+            })}-bot`,
+            isReady: true,
+            isBot: true,
+        });
+        roomInfoBroadcast(room);
     });
 
     socket.on('request start round', ({ speedFactor, round }: NextRoundProps) => {
@@ -190,10 +261,14 @@ io.on('connection', (socket) => {
                     totalDuration,
                     round: room.currentRound,
                 }
-                io.to(player.id).emit('start round', roundInfo);
-                // reset players readiness (for guessing)
-                // XXX the problem with this is if a player disconnects, it will broadcast this to all other players...
-                player.isReady = false;
+                if (player.isBot) {
+                    runBot(player, roundInfo, room, 1.0);
+                } else {
+                    io.to(player.id).emit('start round', roundInfo);
+                    // reset players readiness (for guessing)
+                    // XXX the problem with this is if a player disconnects, it will broadcast this to all other players...
+                    player.isReady = false;
+                }
             });
         }
     });

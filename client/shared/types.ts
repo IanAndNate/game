@@ -13,6 +13,7 @@ export interface Player {
     isReady?: boolean;
     isCurrent?: boolean;
     isPressed?: boolean;
+    isBot: boolean;
 }
 
 export interface RoomInfo {

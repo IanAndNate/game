@@ -76,7 +76,7 @@ export const Play = () => {
 
     const { song, notes, speedFactor } = piece || { song: null, piece: null };
     const lastNote = song && song[ song.length - 1 ];
-    const duration = lastNote && (lastNote.time + lastNote.duration) + 3;
+    const duration = lastNote && (lastNote.time + lastNote.duration) + 3 / speedFactor;
     const numberNotes = notes && notes.length;
 
     return <Container>
@@ -96,7 +96,8 @@ export const Play = () => {
                               index={i}
                               time={time}
                               note={key}
-                              duration={duration}/>
+                              duration={duration}
+                              speedFactor={speedFactor}/>
                     )}
             </MusicPage>
         </MusicContainer>

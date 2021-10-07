@@ -97,7 +97,6 @@ export const joinRoom =
                 timers,
             } = getState();
             const forwardStart = startTime - Date.now() + diff;
-            // FIXME this countdown doesn't account for speedFactor
             const timer = countDown(forwardStart - 5000, 5, 1000, (i) => {
                 if (i === 3) {
                     setState({
@@ -119,7 +118,7 @@ export const joinRoom =
                     guesses: [],
                     players: players.map((p) => ({
                         ...p,
-                        isReady: false, // reset readiness when starting to guess
+                        isReady: p.isBot || false, // reset readiness when starting to guess
                     })),
                 });
             }, forwardStart + (totalDuration * speedFactor) + 3000);
@@ -301,4 +300,11 @@ export const makeGuess =
                 ],
             });
         });
+    };
+
+export const addBot =
+    () =>
+    ({ getState }: StoreActionApi<State>) => {
+        const { socket } = getState();
+        socket?.emit('add bot');
     };

@@ -7,7 +7,7 @@ import { NoteBar, UserNote } from "../../common/note/styled";
 import { KEYBOARD_KEYS } from "../../common/note/constants";
 
 const Wrapper = styled.div`
-    select {
+    select, button {
         margin-right: 8px;
     }
     display: flex;
@@ -17,7 +17,7 @@ const Wrapper = styled.div`
 `;
 
 export const Lobby = () => {
-    const [{ players, keysDown }, { startNextRound, mouseDown, mouseUp }] = useGame();
+    const [{ players, keysDown }, { startNextRound, mouseDown, mouseUp, addBot }] = useGame();
     const [speed, setSpeed] = useState<number>(1);
     useKeyboard(); // just for fun, let people play notes while waiting
     const start = useCallback(() => {
@@ -42,6 +42,7 @@ export const Lobby = () => {
                     <option value={2}>2x speed</option>
                     <option value={5}>5x speed</option>
                 </select>
+                <button onClick={addBot} disabled={!(players[0]?.isCurrent === true)}>Add bot player</button>
                 <button onClick={start} disabled={isReady}>Ready</button>
                 <LatencyPanel/>
             </div>

@@ -16,6 +16,7 @@ export interface Room {
     players: ServerPlayer[];
     rounds: Round[];
     currentRound: number;
+    botTimers: NodeJS.Timeout[];
 }
 
 export interface Song {
@@ -32,6 +33,7 @@ export interface ServerPlayer {
     name: string;
     notes: PlayerNote[];
     isReady: boolean;
+    isBot: boolean;
 }
 
 export interface KeyPress {
