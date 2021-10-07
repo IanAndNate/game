@@ -16,12 +16,13 @@ export const Note = styled.span<{
     duration: number;
     note: string;
     index: number;
+    speedFactor: number;
 }>`
     position: absolute;
     padding: 10px;
     box-sizing: border-box;
     width: ${TRACK_WIDTH}px;
-    bottom: ${({ time }) => (time + 3) * 500}px;
+    bottom: ${({ time, speedFactor }) => (time + 3 / speedFactor) * 500}px;
     height: ${({ duration }) => duration * 500}px;
     background-color: ${({ note }) =>
         COLOURS[getPosition(note) % COLOURS.length]};
