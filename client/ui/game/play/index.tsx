@@ -74,9 +74,8 @@ export const Play = () => {
         }
     }, [renderTarget]);
 
-    const { song, notes, speedFactor } = piece || { song: null, piece: null };
-    const lastNote = song && song[ song.length - 1 ];
-    const duration = lastNote && (lastNote.time + lastNote.duration) + 3 / speedFactor;
+    const { song, notes, speedFactor, totalDuration } = piece || { song: null, piece: null };
+    const duration = totalDuration / 1000 + 3 / speedFactor;
     const numberNotes = notes && notes.length;
 
     return <Container>
