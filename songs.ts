@@ -56,7 +56,7 @@ const getSongs: RequestHandler = (_req, res) => {
     }))));
 }
 
-const EXCLUDED_MIDI_FAMILIES = ['drums', 'percussive', 'synth effects', 'synth lead', 'synth pad', 'sound effects'];
+const EXCLUDED_MIDI_FAMILIES = ['drums', 'percussive', 'synth effects', 'synth pad', 'sound effects'];
 const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
     const midiArray = new Midi.Midi(data);
     console.log(midiArray.tracks.map(t => t.instrument.family));
