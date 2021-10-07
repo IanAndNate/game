@@ -6,6 +6,7 @@ import { songsRouter, songs } from './songs.js';
 import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player } from './client/shared/types';
+import Midi from '@tonejs/midi';
 
 const app = express();
 
@@ -25,6 +26,8 @@ app.get('/new', (_req, res) => {
     const newRoom: Room = { roomId, players: [], rounds: enabledSongs.map(song => ({
             song,
             guesses: [],
+            notesActive: [],
+            recording: [],
         })),
         currentRound: -1,
         botTimers: [],
@@ -36,6 +39,31 @@ app.get('/new', (_req, res) => {
 
 app.get('/rooms', (_req, res) => {    
     res.send(rooms.map(room => getRoomInfo(room)));
+});
+
+app.get('/game/:roomId/:roundIdx.mid', (req, res) => {
+    const { roomId, roundIdx } = req.params;
+    const room = rooms.find(r => r.roomId === roomId);
+    if (!room) {
+        res.status(404).send('no such room').end();
+        return;
+    }
+    const round = room.rounds[parseInt(roundIdx)];
+    if (!round || round.recording.length === 0) {
+        res.status(404).send('no such round').end();
+        return;
+    }
+    const midi = new Midi.Midi();
+    const track = midi.addTrack();
+    // cut out notes that started waay before the track started
+    const orderedRec = round.recording.sort((a, b) => a.time - b.time).filter(n => n.time > -3);
+    const startTime = orderedRec[0].time; // make the midi t=0 be the first note
+    orderedRec.forEach(n => track.addNote({
+        ...n,
+        time: n.time - startTime,
+        velocity: 0.7,
+    }));
+    res.type('audio/midi').set('Content-disposition', `attachment; filename=${roomId}_${roundIdx}.mid`).send(Buffer.from(midi.toArray())).end();
 });
 
 app.get('*', function (_req, res) {
@@ -124,7 +152,7 @@ const roomInfoBroadcast = (room: Room) => {
 
 const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.9) => {
     const { startTime, song, notes, speedFactor } = round;
-    const startDelay = startTime - Date.now() + 1000 * speedFactor; // not sure why this 1 sec delay exists
+    const startDelay = startTime - Date.now();
     song.forEach((note) => {
         let noteKey = note.key;
         if (noteKey === '') {
@@ -142,8 +170,9 @@ const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.
         if (!n) {
             return;
         }
+
         // add some variation to start/end times
-        const noteTime = note.time + Math.random() * (1 - accuracy) - accuracy;
+        const noteTime = note.time - Math.random() * (1 - accuracy) - accuracy + 1;
         const noteDuration = note.duration * (accuracy + 2 * Math.random() * (1 - accuracy))
         if (noteDuration <= 0) {
             return;
@@ -165,6 +194,11 @@ const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.
         }, startDelay + (noteTime + noteDuration) * 1000 * speedFactor);
         room.botTimers.push(startNote);
         room.botTimers.push(endNote);
+        room.rounds[room.currentRound].recording.push({
+            name: n.note,
+            time: noteTime * speedFactor,
+            duration: noteDuration * speedFactor,
+        });
     });
 }
 
@@ -284,6 +318,7 @@ io.on('connection', (socket) => {
             });
             const startTime = Date.now() + 10000;
             const totalDuration = Math.max(...song.music.map(note => note.time + note.duration)) * 1000;
+            room.rounds[round].startTime = startTime;
            
             players.forEach((player) => {
                 const roundInfo: RoundInfo = {
@@ -323,7 +358,37 @@ io.on('connection', (socket) => {
                         note: mapped.note,
                     }
                     io.to(roomId).emit(`key${event} broadcast`, keypress);
-                }
+                    // construct midi if a round is active
+                    const round = room.currentRound >= 0 && room.rounds[room.currentRound];
+                    if (round) {
+                        if (event === 'down') {
+                            // add
+                            const activeNote = round.notesActive.find(n => n.note === mapped.note);
+                            if (activeNote) {
+                                // ignore
+                                return;
+                            }
+                            // start a new note
+                            round.notesActive.push({
+                                note: mapped.note,
+                                time: Date.now(),
+                            });
+                        } else {
+                            const idx = round.notesActive.findIndex(n => n.note === mapped.note);
+                            if (idx < 0) {
+                                return; // up without a down
+                            }
+                            const noteTime = (round.notesActive[idx].time - round.startTime) / 1000;
+                            const noteDuration = (Date.now() - round.notesActive[idx].time) / 1000;
+                            round.notesActive.splice(idx, 1);
+                            round.recording.push({
+                                name: mapped.note,
+                                time: noteTime,
+                                duration: noteDuration,
+                            });
+                        }
+                    }
+                }                
             }
         }
     };
