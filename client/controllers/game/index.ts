@@ -12,6 +12,7 @@ const initialState: State = {
     toneStarted: false,
     timers: [],
     guesses: [],
+    escapeCount: 0,
 };
 
 type Actions = typeof actions;

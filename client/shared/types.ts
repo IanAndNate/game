@@ -16,6 +16,15 @@ export interface Player {
     isBot: boolean;
 }
 
+export interface SongInfo {
+    fileName: string,
+    songNames: string[],
+    enabled: boolean;
+    uniqueNotes: number;
+    totalNotes: number;
+    duration: number; // seconds
+}
+
 export interface RoomInfo {
     roomId: string;
     players: Player[];
