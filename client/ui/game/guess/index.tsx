@@ -3,7 +3,11 @@ import { useGame } from '../../../controllers/game';
 import styled from '@emotion/styled';
 import { Room } from '../../common/room';
 
-const Wrapper = styled.div``;
+const Wrapper = styled.div`
+    button {
+        margin-bottom: 8px;
+    } 
+`;
 
 const Guesses = () => {
     const [{ guesses }] = useGame();
@@ -11,7 +15,7 @@ const Guesses = () => {
 }
 
 export const Guess = () => {
-    const [{ players, piece: { speedFactor } = { speedFactor: 1}, currentRound, totalRounds, guesses }, { startNextRound, makeGuess }] = useGame();
+    const [{ roomId, players, piece: { speedFactor } = { speedFactor: 1}, currentRound, totalRounds, guesses }, { startNextRound, makeGuess }] = useGame();
     const [guess, setGuess] = useState<string>('');
     const isLastRound = currentRound + 1 === totalRounds;
     const next = useCallback(() => {
@@ -42,5 +46,6 @@ export const Guess = () => {
         </form>
         <Guesses />
         <button onClick={next} disabled={isReady}>{hasCorrect ? (isLastRound ? 'End game' : 'Ready') : 'Give up'}</button>
+        <div><a href={`/game/${roomId}/${currentRound}.mid`} target="_blank">Download a MIDI of your masterpiece!</a></div>
     </Wrapper>
 }

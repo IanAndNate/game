@@ -1,5 +1,4 @@
-import { MidiJSON } from '@tonejs/midi';
-import { TrackJSON } from '@tonejs/midi';
+import { Midi, MidiJSON, TrackJSON } from '@tonejs/midi';
 import { PlayerNote } from './client/shared/types';
 
 interface Guess {
@@ -10,6 +9,16 @@ interface Guess {
 interface Round {
     song: Song;
     guesses: Guess[];
+    notesActive: {
+        note: string;
+        time: number;
+    }[];
+    startTime?: number;
+    recording: {
+        name: string;
+        time: number;
+        duration: number;
+    }[];
 }
 export interface Room {
     roomId: string;
