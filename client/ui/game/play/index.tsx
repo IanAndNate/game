@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useGame, useKeyboard } from '../../../controllers/game'
 import { GameStatus } from '../../../controllers/game/types';
 import { Room } from '../../common/room';
@@ -59,6 +59,10 @@ const Container = styled.div`
     flex-direction: column;
     height: 100%;
     width: 100%;
+    
+    & * {
+        user-select: none;
+    }
 `
 
 export const Play = () => {
@@ -79,7 +83,11 @@ export const Play = () => {
     const duration = totalDuration / 1000 + 3 / speedFactor;
     const numberNotes = notes && notes.length;
 
-    return <Container>
+    const cancelEvent = useCallback((event) => {
+        event.returnValue = false;
+    }, []);
+
+    return <Container onTouchStart={cancelEvent} onTouchEnd={cancelEvent} onTouchMove={cancelEvent} onTouchCancel={cancelEvent}>
         <div>
             <h2>Round {currentRound + 1} / {totalRounds}</h2>
             <Room players={players} disabled={false}><LatencyPanel/></Room>
