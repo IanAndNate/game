@@ -1,6 +1,8 @@
 const webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
+
 
 const config = {
     entry: [
@@ -40,6 +42,10 @@ const config = {
             inject: true,
             template: './index.html',
             filename: '../static/index.html'
+        }),
+        new WorkboxWebpackPlugin.InjectManifest({
+            swSrc: "./sw.ts",
+            swDest: "../static/sw.js"
         })
     ]
 };

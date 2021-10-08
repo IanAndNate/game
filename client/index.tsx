@@ -49,3 +49,17 @@ const App = () => {
 };
 
 ReactDOM.render(<App />, document.getElementById("root"));
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .then(function () {
+            console.log("Service Worker Registered");
+        });
+}
+
+navigator.serviceWorker.addEventListener('message', event => {
+    console.log(event);
+});
+
+navigator.serviceWorker.controller.postMessage("hullo");

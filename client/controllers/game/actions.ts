@@ -95,6 +95,7 @@ export const joinRoom =
                 })),
             });
             const { startTime, totalDuration, speedFactor } = piece;
+
             const {
                 timeDiff: { diff },
                 timers,

@@ -9,7 +9,8 @@
     "allowJs": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "lib": ["es2019", "es6", "dom", "webworker"]
   },
   "exclude": [
     "node_modules",

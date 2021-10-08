@@ -105,7 +105,7 @@ export const Play = () => {
         </MusicContainer>
         <NoteBar>
             {notes && notes.map(({ key }, i) =>
-                <UserNote note={key} value={key} onPointerDown={mouseDown} onPointerUp={mouseUp}
+                <UserNote note={key} value={key} onPointerDown={mouseDown} onPointerUp={mouseUp} onPointerLeave={mouseUp}
                           key={i} isPressed={keysDown.has(key)}>{key}</UserNote>
             )}
         </NoteBar>

@@ -49,4 +49,5 @@ export const UserNote = styled.button<{ note: string; isPressed: boolean }>`
         ${({ note, isPressed }) =>
             isPressed ? COLOURS[getPosition(note) % COLOURS.length] : "black"};
     filter: brightness(${({ isPressed }) => (isPressed ? "125%" : "75%")});
+    user-select: none;
 `;

@@ -20,7 +20,7 @@ const Song = ({ song, onChange }: SongProps) => {
         setUpdatedSongNames(songNames.join(','));
     }, [songNames]);
     const toggle = async () => {
-        await fetch(`/songs/${fileName}`, { 
+        await fetch(`/songs/${fileName}`, {
             method: 'PATCH', headers: {
                 'Content-type': 'application/json',
             },
@@ -78,11 +78,12 @@ export const Admin = () => {
     }
     const uploadSong = async (ev: React.ChangeEvent<HTMLInputElement>) => {
         const formData = new FormData();
+        // @ts-ignore
         [...ev.target.files].forEach(file => {
             formData.append('song', file, file.name);
         });
         const response = await fetch('/songs', { method: 'POST', body: formData });
-        setSongs(await response.json());        
+        setSongs(await response.json());
         ev.target.value = '';
     }
     const upload = () => {
