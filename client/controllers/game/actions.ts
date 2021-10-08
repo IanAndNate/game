@@ -165,6 +165,14 @@ export const joinRoom =
             });
         })
 
+        socket.on("game over", (gameOverInfo) => {
+            console.log('game over!', gameOverInfo);
+            setState({
+                status: GameStatus.GameOver,
+                gameOverInfo,
+            })
+        });
+
         setState({
             socket,
             roomId,
@@ -201,6 +209,12 @@ export const startNextRound =
             round: currentRound + 1,
         };
         socket.emit("request start round", nextRound);
+    };
+
+export const endGame = () => 
+    ({ getState }: StoreActionApi<State>) => {
+        const { socket } = getState();
+        socket.emit("request end game");
     };
 
 export const ping =

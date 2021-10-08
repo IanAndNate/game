@@ -34,14 +34,13 @@ export const Guess = () => {
             totalRounds,
             guesses,
         },
-        { startNextRound, makeGuess },
+        { startNextRound, makeGuess, endGame },
     ] = useGame();
     const [guess, setGuess] = useState<string>("");
     const isLastRound = currentRound + 1 === totalRounds;
     const next = useCallback(() => {
         if (isLastRound) {
-            // TODO end game, show final scores
-            window.location.href = "/";
+            endGame();
             return;
         }
         startNextRound({ speedFactor });

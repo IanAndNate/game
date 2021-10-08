@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client';
 import { Sampler } from 'tone';
-import { PlayerNote, Note, Player } from '../../shared/types';
+import { PlayerNote, Note, Player, GameOverInfo } from '../../shared/types';
 
 export enum GameStatus {
     Disconnected = 'disconnected',
@@ -9,6 +9,7 @@ export enum GameStatus {
     Running = 'running',
     Guessing = 'guessing',
     Spectating = 'spectating',
+    GameOver = 'gameover',
 }
 interface Guess {
     attempt: string;
@@ -32,4 +33,5 @@ export interface State {
     totalRounds?: number;
     guesses: Guess[];
     escapeCount: number;
+    gameOverInfo?: GameOverInfo;
 }

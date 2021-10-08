@@ -50,3 +50,19 @@ export interface RoundInfo {
     song: Note[];
     notes: PlayerNote[];
 }
+
+export interface GameOverPlayerRoundInfo {
+    playerId: string;
+    name: string;
+    guesses: string[];
+    isCorrect: boolean;
+}
+
+export interface GameOverRoundInfo {
+    songNames: string[];
+    players: GameOverPlayerRoundInfo[];
+}
+
+export interface GameOverInfo {
+    rounds: GameOverRoundInfo[];
+}
