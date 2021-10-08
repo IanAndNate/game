@@ -47,8 +47,9 @@ const initSynth =
 
         const { socket } = getState();
         socket.on("keydown broadcast", (e: KeyPress) => {
-            sampler.triggerAttack(e.note, Tone.now());
             const { players } = getState();
+            const currentPlayerId = players.find(p => p.isCurrent)?.id;
+            sampler.triggerAttack(e.note, Tone.now(), e.playerId === currentPlayerId ? 1 : 0.7);
             setState({
                 players: players.map((p) =>
                     p.id === e.playerId
@@ -166,7 +167,6 @@ export const joinRoom =
         })
 
         socket.on("game over", (gameOverInfo) => {
-            console.log('game over!', gameOverInfo);
             setState({
                 status: GameStatus.GameOver,
                 gameOverInfo,
