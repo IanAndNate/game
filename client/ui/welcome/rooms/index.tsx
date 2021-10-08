@@ -16,6 +16,8 @@ export const Rooms = () => {
     const newGame = useCreateAndJoinRoom();
     const [rooms, setRooms] = useState<RoomInfo[] | null>(null);
     const [mode, setMode] = useState<GameMode>(GameMode.Standard);
+    const [maxKeys, setMaxKeys] = useState<number>(-1);
+    const [botAccuracy, setBotAccuracy] = useState<number>(1);
     const fetchRooms = useCallback(async () => {
         setRooms(null);
         const response = await fetch("/rooms");
@@ -27,6 +29,18 @@ export const Rooms = () => {
     const updateMode = useCallback(
         (ev: React.ChangeEvent<HTMLSelectElement>) => {
             setMode(ev.target.value as GameMode);
+        },
+        []
+    );
+    const updateMaxKeys = useCallback(
+        (ev: React.ChangeEvent<HTMLSelectElement>) => {
+            setMaxKeys(parseInt(ev.target.value));
+        },
+        []
+    );
+    const updateBotAccuracy = useCallback(
+        (ev: React.ChangeEvent<HTMLSelectElement>) => {
+            setBotAccuracy(parseFloat(ev.target.value));
         },
         []
     );
@@ -49,7 +63,17 @@ export const Rooms = () => {
                     play 5 random bitmidi.com songs
                 </option>
             </select>
-            <button onClick={() => newGame(mode)}>New game</button>
+            <select onChange={updateMaxKeys} value={maxKeys}>
+                <option value={-1}>unlimited keys per player</option>
+                {[4, 6, 8, 10].map(k => <option key={k} value={k}>maximum {k} keys</option>)}
+            </select>
+            <select onChange={updateBotAccuracy} value={botAccuracy}>
+                <option value={1}>use perfect bots</option>
+                <option value={0.9}>use good bots</option>
+                <option value={0.6}>use bad bots</option>
+                <option value={0.3}>use stupid bots</option>
+            </select>
+            <button onClick={() => newGame(mode, maxKeys, botAccuracy)}>New game</button>
             <button onClick={fetchRooms}>Refresh</button>
         </>
     );

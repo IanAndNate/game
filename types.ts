@@ -27,6 +27,8 @@ export interface Room {
     rounds: Round[];
     currentRound: number;
     botTimers: NodeJS.Timeout[];
+    maxKeys: number; // -1 = unlimited, otherwise add bots until all players have < maxKeys
+    botAccuracy: number; // 1 = perfect, 0 = will not play any notes
 }
 
 export interface Song {

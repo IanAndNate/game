@@ -4,7 +4,7 @@ import { Server, Socket } from 'socket.io';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { getRandomBitMidiSong } from './bitmidi.js';
-import { KeyPress, Room } from './types';
+import { KeyPress, Room, ServerPlayer } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo } from './client/shared/types';
 import Midi from '@tonejs/midi';
@@ -27,6 +27,14 @@ app.get('/new', async (req, res) => {
         res.status(500).send('No songs enabled on server').end();
         return;
     }
+    let maxKeys = -1;
+    if (req.query.maxKeys) {
+        maxKeys = parseInt(req.query.maxKeys as string);
+    }
+    let botAccuracy = 1;
+    if (req.query.botAccuracy) {
+        botAccuracy = parseFloat(req.query.botAccuracy as string);
+    }
     const newRoom: Room = { roomId, players: [], rounds: enabledSongs.map(song => ({
             song,
             guesses: [],
@@ -36,6 +44,8 @@ app.get('/new', async (req, res) => {
         })),
         currentRound: -1,
         botTimers: [],
+        maxKeys,
+        botAccuracy,
     };
     
     rooms.push(newRoom);
@@ -187,6 +197,23 @@ const gameOverBroadcast = (room: Room) => {
     io.to(room.roomId).emit('game over', gameOverInfo);
 }
 
+const createBot = (): ServerPlayer => ({
+    id: uuidv4(),
+    notes: [],
+    name: `${uniqueNamesGenerator({
+        dictionaries: [adjectives, animals],
+        separator: ' ',
+        style: 'capital',
+    })}-bot`,
+    isReady: true,
+    isBot: true,
+});
+
+const addBot = (room: Room) => {
+    room.players.push(createBot());
+    roomInfoBroadcast(room);
+}
+
 const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.9) => {
     const { startTime, song, notes, speedFactor } = round;
     const startDelay = startTime - Date.now();
@@ -249,8 +276,21 @@ const startNextRound = (room: Room) => {
     const round = room.rounds[room.currentRound];
     const song = round.song;
     const { uniqueNotes } = song;
-    const { players } = room;
 
+    const maxKeys = room.maxKeys;
+    if (maxKeys > 0) {
+        // delete all the bots
+        room.players = room.players.filter(p => !p.isBot);
+        // add bots up to the point we will have maxKeys
+        const minPlayers = Math.ceil(uniqueNotes.length / maxKeys);
+        const botsNeeded = minPlayers - room.players.length;
+        if (botsNeeded > 0) {
+            room.players.push(...[...Array(botsNeeded)].map(createBot));
+        }
+        roomInfoBroadcast(room);
+    }
+
+    const { players } = room;
     const playerNumber = players.length;
     const shuffledPlayers = shuffle([...players]);
     uniqueNotes.forEach((note, i) => {
@@ -280,7 +320,7 @@ const startNextRound = (room: Room) => {
             round: room.currentRound,
         }
         if (player.isBot) {
-            runBot(player, roundInfo, room, 1.0);
+            runBot(player, roundInfo, room, room.botAccuracy);
         } else {
             io.to(player.id).emit('start round', roundInfo);
             // reset players readiness (for guessing)
@@ -343,22 +383,10 @@ io.on('connection', (socket) => {
     socket.on('add bot', () => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
-
         if (!room) {
             return;
         }
-        room.players.push({
-            id: uuidv4(),
-            notes: [],
-            name: `${uniqueNamesGenerator({
-                dictionaries: [adjectives, animals],
-                separator: ' ',
-                style: 'capital',
-            })}-bot`,
-            isReady: true,
-            isBot: true,
-        });
-        roomInfoBroadcast(room);
+        addBot(room);
     });
 
     socket.on('request abort round', () => {
