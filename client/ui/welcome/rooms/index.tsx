@@ -40,17 +40,13 @@ export const Rooms = () => {
     }
     return (
         <Wrapper>
-            {rooms.map(({ roomId, currentRound, players }) => (
+            {rooms.map(({ roomId, currentRound, totalRounds, players }) => (
                 <Room
                     key={roomId}
                     players={players}
-                    disabled={currentRound !== -1}
+                    disabled={false}
                     action={
-                        currentRound !== -1 ? (
-                            <>Game in progress</>
-                        ) : (
-                            <a href={`/game/${roomId}`}>join game</a>
-                        )
+                        <a href={`/game/${roomId}`}>join game ({currentRound < 0 ? 'new game' : `round ${currentRound + 1}/${totalRounds}`})</a>
                     }
                 />
             ))}

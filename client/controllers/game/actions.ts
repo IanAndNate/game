@@ -133,8 +133,14 @@ export const joinRoom =
             window.alert(message);
         });
         socket.on("room info", (roomInfo: RoomInfo) => {
+            let { status } = getState();
+            // if joining a game half-way, put the user into spectator mode
+            if (roomInfo.currentRound !== -1 && status === GameStatus.Lobby) {
+                status = GameStatus.Spectating;
+            }
             setState({
                 ...roomInfo,
+                status,
             });
         });
         socket.on("abort", () => {

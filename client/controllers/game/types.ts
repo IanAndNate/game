@@ -8,6 +8,7 @@ export enum GameStatus {
     Starting = 'starting',
     Running = 'running',
     Guessing = 'guessing',
+    Spectating = 'spectating',
 }
 interface Guess {
     attempt: string;
