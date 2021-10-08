@@ -1,5 +1,5 @@
 import { createHook, createStore } from 'react-sweet-state';
-import { GameStatus, State } from './types';
+import { GameMode, GameStatus, State } from './types';
 import * as actions from './actions';
 import { useCallback, useEffect } from 'react';
 import { useHistory } from 'react-router';
@@ -22,8 +22,13 @@ export const useGame = createHook<State, Actions>(store);
 
 export const useCreateAndJoinRoom = () => {
     const history = useHistory();
-    return useCallback(async () => {
-        const roomIdResponse = await fetch('/new');
+    return useCallback(async (gameMode: GameMode) => {
+        const gameModeParams = {
+            [GameMode.Standard]: {},
+            [GameMode.BitMidi]: { bitmidi: '1' },
+            [GameMode.BitMidi5]: { bitmidi: '5' },
+        };
+        const roomIdResponse = await fetch(`/new?${new URLSearchParams(gameModeParams[gameMode]).toString()}`);
         const { roomId } = await roomIdResponse.json();
         history.push(`/game/${roomId}`);
     }, [history]);

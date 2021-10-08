@@ -3,6 +3,7 @@ import {createServer} from 'http';
 import { Server, Socket } from 'socket.io';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
+import { getRandomBitMidiSong } from './bitmidi.js';
 import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo } from './client/shared/types';
@@ -15,10 +16,13 @@ app.use(express.static(`static`));
 
 const rooms: Room[] = [];
 
-app.get('/new', (_req, res) => {
+app.get('/new', async (req, res) => {
     const roomId = uuidv4();
-    // TODO generate a song list dynamically
-    const enabledSongs = songs.filter(s => s.enabled);
+    let enabledSongs = songs.filter(s => s.enabled);
+    if (req.query.bitmidi) {
+        const numSongs = parseInt(req.query.bitmidi as string);
+        enabledSongs = await Promise.all([...Array(numSongs)].map(_ => getRandomBitMidiSong(500)));
+    }
     if (enabledSongs.length === 0) {
         res.status(500).send('No songs enabled on server').end();
         return;
@@ -28,6 +32,7 @@ app.get('/new', (_req, res) => {
             guesses: [],
             notesActive: [],
             recording: [],
+            speedFactor: 1,
         })),
         currentRound: -1,
         botTimers: [],
@@ -234,6 +239,57 @@ const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.
     });
 }
 
+const startNextRound = (room: Room) => {
+    // start a new round, clear stuff from previous round
+    room.currentRound = room.currentRound + 1;
+    room.players.forEach(p => p.notes = []);
+    room.botTimers.forEach(clearTimeout);
+    room.botTimers = [];
+
+    const round = room.rounds[room.currentRound];
+    const song = round.song;
+    const { uniqueNotes } = song;
+    const { players } = room;
+
+    const playerNumber = players.length;
+    const shuffledPlayers = shuffle([...players]);
+    uniqueNotes.forEach((note, i) => {
+        // 0, 1, 2, 3, 4, 5
+        // 1
+        const insertIndex = i % playerNumber;
+        shuffledPlayers[insertIndex].notes = shuffledPlayers[insertIndex].notes || [];
+        shuffledPlayers[insertIndex].notes.push({
+            note: note.name,
+            key: KEYBOARD_KEYS[shuffledPlayers[insertIndex].notes.length]
+        })
+    });
+    const startTime = Date.now() + 10000;
+    const totalDuration = Math.max(...song.music.map(note => note.time + note.duration)) * 1000;
+    round.startTime = startTime;
+
+    players.forEach((player) => {
+        const roundInfo: RoundInfo = {
+            speedFactor: round.speedFactor,
+            notes: player.notes,
+            song: song.music.map(({name, time, duration}) => {
+                const matched = player.notes.find((mapped) => mapped.note === name);
+                return {key: matched && matched.key || '', time, duration }
+            }),
+            startTime,
+            totalDuration,
+            round: room.currentRound,
+        }
+        if (player.isBot) {
+            runBot(player, roundInfo, room, 1.0);
+        } else {
+            io.to(player.id).emit('start round', roundInfo);
+            // reset players readiness (for guessing)
+            // XXX the problem with this is if a player disconnects, it will broadcast this to all other players...
+            player.isReady = false;
+        }
+    });
+}
+
 io.on('connection', (socket) => {
 
     socket.on("disconnecting", () => {
@@ -248,7 +304,12 @@ io.on('connection', (socket) => {
                 room.botTimers.forEach((t) => clearTimeout(t));
                 rooms.splice(roomIndex, 1);
             } else {
+                // let everyone know someone disconnected
                 roomInfoBroadcast(room);
+                // if everyone left is ready, start the next round
+                if (room.players.every(p => p.isReady)) {
+                    startNextRound(room);
+                }
             }
         }
     });
@@ -336,61 +397,17 @@ io.on('connection', (socket) => {
         const room = rooms.find(({ roomId: id }) => id === roomId);
 
         if (room) {
-            const { players } = room;
             if (room.currentRound + 1 !== round || round >= room.rounds.length) {
                 return; // already starting?
             }
+            room.rounds[round].speedFactor = speedFactor;
             const player = room.players.find((player) => player.id === socket.id);
             player.isReady = true;
             if (!room.players.every(p => p.isReady)) {
                 roomInfoBroadcast(room);
                 return; // not everyone is ready yet, but broadcast the updated readiness
             }
-            // start a new round, clear stuff from previous round
-            room.currentRound = round;
-            room.players.forEach(p => p.notes = []);
-            room.botTimers.forEach(clearTimeout);
-            room.botTimers = [];
-
-            const song = room.rounds[room.currentRound].song;
-            const { uniqueNotes } = song;
-            const playerNumber = players.length;
-            const shuffledPlayers = shuffle([...players]);
-            uniqueNotes.forEach((note, i) => {
-                // 0, 1, 2, 3, 4, 5
-                // 1
-                const insertIndex = i % playerNumber;
-                shuffledPlayers[insertIndex].notes = shuffledPlayers[insertIndex].notes || [];
-                shuffledPlayers[insertIndex].notes.push({
-                    note: note.name,
-                    key: KEYBOARD_KEYS[shuffledPlayers[insertIndex].notes.length]
-                })
-            });
-            const startTime = Date.now() + 10000;
-            const totalDuration = Math.max(...song.music.map(note => note.time + note.duration)) * 1000;
-            room.rounds[round].startTime = startTime;
-           
-            players.forEach((player) => {
-                const roundInfo: RoundInfo = {
-                    speedFactor,
-                    notes: player.notes,
-                    song: song.music.map(({name, time, duration}) => {
-                        const matched = player.notes.find((mapped) => mapped.note === name);
-                        return {key: matched && matched.key || '', time, duration }
-                    }),
-                    startTime,
-                    totalDuration,
-                    round: room.currentRound,
-                }
-                if (player.isBot) {
-                    runBot(player, roundInfo, room, 1.0);
-                } else {
-                    io.to(player.id).emit('start round', roundInfo);
-                    // reset players readiness (for guessing)
-                    // XXX the problem with this is if a player disconnects, it will broadcast this to all other players...
-                    player.isReady = false;
-                }
-            });
+            startNextRound(room);
         }
     });
 

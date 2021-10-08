@@ -1,4 +1,4 @@
-import { Midi, MidiJSON, TrackJSON } from '@tonejs/midi';
+import { MidiJSON, TrackJSON } from '@tonejs/midi';
 import { PlayerNote } from './client/shared/types';
 
 interface Guess {
@@ -14,6 +14,7 @@ interface Round {
         time: number;
     }[];
     startTime?: number;
+    speedFactor: number;
     recording: {
         name: string;
         time: number;
