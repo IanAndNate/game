@@ -14,6 +14,7 @@ interface Round {
         time: number;
     }[];
     startTime?: number;
+    speedFactor: number;
     recording: {
         name: string;
         time: number;
