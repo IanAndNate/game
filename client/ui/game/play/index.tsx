@@ -7,6 +7,7 @@ import { LatencyPanel } from '../../common/latency-panel';
 import { keyframes } from '@emotion/react';
 import { TRACK_WIDTH } from '../../common/note/constants';
 import { NoteBar, UserNote, Note } from '../../common/note/styled';
+import { ProgressIndicator } from './progress-indicator';
 
 const MusicContainer = styled.div<{ height: number }>`
     overflow: hidden;
@@ -79,8 +80,10 @@ export const Play = () => {
     const numberNotes = notes && notes.length;
 
     return <Container>
-        <h2>Round {currentRound + 1} / {totalRounds}</h2>
-        <Room players={players} disabled={false}><LatencyPanel/></Room>
+        <div>
+            <h2>Round {currentRound + 1} / {totalRounds}</h2>
+            <Room players={players} disabled={false}><LatencyPanel/></Room>
+        </div>
         <MusicContainer ref={renderTarget}
                         height={targetHeight}>
             <CountDown timeTillLaunch={timeTillLaunch}>{timeTillLaunch}</CountDown>
@@ -106,5 +109,6 @@ export const Play = () => {
                           key={i} isPressed={keysDown.has(key)}>{key}</UserNote>
             )}
         </NoteBar>
+        <ProgressIndicator timeTillLaunch={timeTillLaunch} totalDuration={totalDuration} speedFactor={speedFactor} />
     </Container>
 }
