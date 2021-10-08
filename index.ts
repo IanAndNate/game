@@ -3,6 +3,7 @@ import {createServer} from 'http';
 import { Server, Socket } from 'socket.io';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
+import { getRandomBitMidiSong } from './bitmidi.js';
 import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo } from './client/shared/types';
@@ -15,10 +16,13 @@ app.use(express.static(`static`));
 
 const rooms: Room[] = [];
 
-app.get('/new', (_req, res) => {
+app.get('/new', async (req, res) => {
     const roomId = uuidv4();
-    // TODO generate a song list dynamically
-    const enabledSongs = songs.filter(s => s.enabled);
+    let enabledSongs = songs.filter(s => s.enabled);
+    if (req.query.bitmidi) {
+        const numSongs = parseInt(req.query.bitmidi as string);
+        enabledSongs = await Promise.all([...Array(numSongs)].map(_ => getRandomBitMidiSong(500)));
+    }
     if (enabledSongs.length === 0) {
         res.status(500).send('No songs enabled on server').end();
         return;

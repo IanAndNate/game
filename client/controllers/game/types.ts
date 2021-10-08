@@ -11,6 +11,13 @@ export enum GameStatus {
     Spectating = 'spectating',
     GameOver = 'gameover',
 }
+
+export enum GameMode {
+    Standard = 'standard',
+    BitMidi = 'bitmidi',
+    BitMidi5 = 'bitmidi5',
+};
+
 interface Guess {
     attempt: string;
     isCorrect: boolean;
