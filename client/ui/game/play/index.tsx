@@ -72,6 +72,10 @@ export const Play = () => {
     const renderTarget = useRef(null);
 
     useEffect(() => {
+        window.scrollTo(0,1);
+    }, []);
+
+    useEffect(() => {
         if (renderTarget.current) {
             setTimeout(() => {
                 setTargetHeight(renderTarget.current.clientHeight);
