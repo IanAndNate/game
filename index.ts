@@ -5,7 +5,7 @@ import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { KeyPress, Room } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
-import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player } from './client/shared/types';
+import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo } from './client/shared/types';
 import Midi from '@tonejs/midi';
 
 const app = express();
@@ -150,6 +150,38 @@ const roomInfoBroadcast = (room: Room) => {
     });
 }
 
+const gameOverBroadcast = (room: Room) => {
+    const gameOverInfo: GameOverInfo = {
+        rounds: room.rounds.map(r => ({
+            songNames: r.song.songNames,
+            players: r.guesses.reduce<GameOverPlayerRoundInfo[]>((pl, g) => {
+                const playerInfo = pl.find(p => p.playerId === g.playerId);
+                if (!playerInfo) {
+                    // maybe a dropped out player
+                    pl.push({
+                        playerId: g.playerId,
+                        name: '???',
+                        guesses: [g.guess],
+                        isCorrect: g.isCorrect,
+                    });
+                } else {
+                    playerInfo.guesses.push(g.guess);
+                    if (g.isCorrect) {
+                        playerInfo.isCorrect = true;
+                    }
+                }
+                return pl;
+            }, room.players.filter(p => !p.isBot).map(p => ({
+                playerId: p.id,
+                name: p.name,
+                guesses: [],
+                isCorrect: false,
+            }))),
+        })),
+    };
+    io.to(room.roomId).emit('game over', gameOverInfo);
+}
+
 const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.9) => {
     const { startTime, song, notes, speedFactor } = round;
     const startDelay = startTime - Date.now();
@@ -275,12 +307,30 @@ io.on('connection', (socket) => {
         if (!room) {
             return;
         }
-
         room.botTimers.forEach(clearTimeout);
         room.botTimers = [];
         io.to(room.roomId).emit('abort round');
     });
 
+    socket.on('request end game', () => {
+        const roomId = getRoomId(socket);
+        const room = rooms.find(({ roomId: id }) => id === roomId);
+
+        if (!room) {
+            return;
+        }
+        const player = room.players.find((player) => player.id === socket.id);
+        if (!player) {
+            return;
+        }
+        player.isReady = true;
+        if (!room.players.every(p => p.isReady)) {
+            roomInfoBroadcast(room);
+            return; // not everyone is ready yet, but broadcast the updated readiness
+        }
+        gameOverBroadcast(room);
+    });
+    
     socket.on('request start round', ({ speedFactor, round }: NextRoundProps) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);

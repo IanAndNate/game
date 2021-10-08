@@ -8,7 +8,7 @@ export const NoteBar = styled("div")`
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
 `;
 
 export const Note = styled.span<{

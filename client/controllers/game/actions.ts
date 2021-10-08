@@ -133,8 +133,14 @@ export const joinRoom =
             window.alert(message);
         });
         socket.on("room info", (roomInfo: RoomInfo) => {
+            let { status } = getState();
+            // if joining a game half-way, put the user into spectator mode
+            if (roomInfo.currentRound !== -1 && status === GameStatus.Lobby) {
+                status = GameStatus.Spectating;
+            }
             setState({
                 ...roomInfo,
+                status,
             });
         });
         socket.on("abort", () => {
@@ -158,6 +164,14 @@ export const joinRoom =
                 timers: [],
             });
         })
+
+        socket.on("game over", (gameOverInfo) => {
+            console.log('game over!', gameOverInfo);
+            setState({
+                status: GameStatus.GameOver,
+                gameOverInfo,
+            })
+        });
 
         setState({
             socket,
@@ -195,6 +209,12 @@ export const startNextRound =
             round: currentRound + 1,
         };
         socket.emit("request start round", nextRound);
+    };
+
+export const endGame = () => 
+    ({ getState }: StoreActionApi<State>) => {
+        const { socket } = getState();
+        socket.emit("request end game");
     };
 
 export const ping =
