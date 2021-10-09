@@ -47,5 +47,5 @@ jobs:
           environment_name: game-dev
           version_label: ${{github.sha}}
           region: ap-southeast-2
-          deployment_package: dist/deploy.zip
+          deployment_package: server/dist/deploy.zip
           wait_for_deployment: false
