@@ -4,10 +4,11 @@ import { Server, Socket } from 'socket.io';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { getRandomBitMidiSong } from './bitmidi.js';
-import { KeyPress, Room, ServerPlayer } from './types';
+import { KeyPress, Room, ServerPlayer, Song } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo } from './client/shared/types';
 import Midi from '@tonejs/midi';
+import { NoteJSON } from '@tonejs/midi/dist/Note';
 
 const app = express();
 
@@ -47,12 +48,12 @@ app.get('/new', async (req, res) => {
         maxKeys,
         botAccuracy,
     };
-    
+
     rooms.push(newRoom);
     res.send({ roomId: newRoom.roomId });
 });
 
-app.get('/rooms', (_req, res) => {    
+app.get('/rooms', (_req, res) => {
     res.send(rooms.map(room => getRoomInfo(room)));
 });
 
@@ -132,19 +133,19 @@ const getRoomId = (socket: Socket) => {
 
 function shuffle<T>(array: T[]): T[] {
     let currentIndex = array.length, randomIndex;
-  
+
     // While there remain elements to shuffle...
     while (currentIndex != 0) {
-  
+
       // Pick a remaining element...
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
-  
+
       // And swap it with the current element.
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex], array[currentIndex]];
     }
-  
+
     return array;
 }
 
@@ -212,6 +213,46 @@ const createBot = (): ServerPlayer => ({
 const addBot = (room: Room) => {
     room.players.push(createBot());
     roomInfoBroadcast(room);
+}
+
+const ORDERED_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const compareNotes = (a: string, b: string): number => {
+    const octaveA = parseInt(a.slice(-1));
+    const octaveB = parseInt(b.slice(-1));
+    if (octaveA !== octaveB) {
+        return octaveA - octaveB;
+    }
+    const noteA = ORDERED_NOTES.indexOf(a.slice(0, a.length - 1));
+    const noteB = ORDERED_NOTES.indexOf(b.slice(0, b.length - 1));
+    return noteA - noteB;
+}
+
+// analyse a song and find the most significant melody notes
+// this is done by
+// grouping all notes by time
+// filter out all the highest notes in each "chord"
+// order by frequency
+const getOrderedMelodyNotes = (song: Song) => {
+    // figure out the highest notes in each timeslice
+    const highestNotes = song.music.reduce<Record<number, NoteJSON>>((g, note) => {
+        if (!g[note.time]) {
+            g[note.time] = note;
+        } else if (compareNotes(g[note.time].name, note.name) < 0) {
+            g[note.time] = note;
+        }
+        return g;
+    }, {});
+    // count how many times the notes are the highest note
+    const counted = Object.values(highestNotes).reduce<Record<string, number>>((c, note) => {
+        c[note.name] += 1;
+        return c;
+    }, song.music.reduce<Record<string, number>>((i, note) => {
+        i[note.name] = 0;
+        return i;
+    }, {}));
+    // now order the notes from most frequent to least
+    const ordered = Object.keys(counted).sort((a, b) => counted[b] - counted[a]);
+    return ordered;
 }
 
 const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy: number = 0.9) => {
@@ -290,19 +331,35 @@ const startNextRound = (room: Room) => {
         roomInfoBroadcast(room);
     }
 
+    // when allocating notes, try to assign melody notes to players
     const { players } = room;
-    const playerNumber = players.length;
-    const shuffledPlayers = shuffle([...players]);
-    uniqueNotes.forEach((note, i) => {
-        // 0, 1, 2, 3, 4, 5
-        // 1
-        const insertIndex = i % playerNumber;
-        shuffledPlayers[insertIndex].notes = shuffledPlayers[insertIndex].notes || [];
-        shuffledPlayers[insertIndex].notes.push({
-            note: note.name,
-            key: KEYBOARD_KEYS[shuffledPlayers[insertIndex].notes.length]
-        })
+    const bots = players.filter(p => p.isBot);
+    const humans = shuffle(players.filter(p => !p.isBot));
+    const sortedNotes = getOrderedMelodyNotes(song);
+    const numHumanNotes = Math.ceil(sortedNotes.length * (humans.length / players.length));
+    sortedNotes.forEach((note, i) => {
+        if (i < numHumanNotes) {
+            // give the "best" notes to humans
+            const insertIndex = i % humans.length;
+            humans[insertIndex].notes.push({
+                note,
+                key: '?', // assign keys at the end
+            });
+        } else {
+            const insertIndex = i % bots.length;
+            bots[insertIndex].notes.push({
+                note,
+                key: KEYBOARD_KEYS[bots[insertIndex].notes.length]
+            })
+        }
     });
+    // assign keys so that the notes are low to high
+    humans.forEach(h => {
+        h.notes = h.notes.sort((a, b) => compareNotes(a.note, b.note)).map((note, idx) => ({
+            note: note.note,
+            key: KEYBOARD_KEYS[idx],
+        }));
+    })
     const startTime = Date.now() + 10000;
     const totalDuration = Math.max(...song.music.map(note => note.time + note.duration)) * 1000;
     round.startTime = startTime;
@@ -419,7 +476,7 @@ io.on('connection', (socket) => {
         }
         gameOverBroadcast(room);
     });
-    
+
     socket.on('request start round', ({ speedFactor, round }: NextRoundProps) => {
         const roomId = getRoomId(socket);
         const room = rooms.find(({ roomId: id }) => id === roomId);
@@ -483,7 +540,7 @@ io.on('connection', (socket) => {
                             });
                         }
                     }
-                }                
+                }
             }
         }
     };

@@ -31,7 +31,7 @@ export const getRandomBitMidiSong = async (searchRange: number): Promise<Song> =
     const blob = await midiResponse.blob()
     const data = await blob.arrayBuffer();
 
-    const sanitiseName = (s: string) => s.replace('.mid', '');
+    const sanitiseName = (s: string) => s.toLowerCase().replace(/\d*.mid$/i, '').replace(/[-_\s]+/g, ' ').trim();
     return {
         ...parseMidi(result.name, data),
         songNames: [result.name, ...(result.alternateNames || [])].map(sanitiseName),
