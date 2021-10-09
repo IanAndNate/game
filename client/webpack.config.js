@@ -2,15 +2,15 @@ const webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
-
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const config = {
     entry: [
         'react-hot-loader/patch',
-        './index.tsx'
+        './src/index.tsx'
     ],
     output: {
-        path: path.resolve(__dirname, '../static'),
+        path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.[hash].js',
         publicPath: '/'
     },
@@ -35,18 +35,23 @@ const config = {
         }
     },
     devServer: {
-        static: '../static'
+        static: 'static'
     },
     plugins: [
         new HtmlWebpackPlugin ({
             inject: true,
-            template: './index.html',
-            filename: '../static/index.html'
+            template: './src/index.html',
+            filename: 'index.html'
         }),
         new WorkboxWebpackPlugin.InjectManifest({
-            swSrc: "./sw.ts",
-            swDest: "../static/sw.js"
-        })
+            swSrc: "./src/sw.ts",
+            swDest: "sw.js"
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: "static", to: "." }
+            ]
+        }),
     ]
 };
 

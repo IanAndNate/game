@@ -66,3 +66,8 @@ export interface GameOverRoundInfo {
 export interface GameOverInfo {
     rounds: GameOverRoundInfo[];
 }
+
+export interface KeyPress {
+    playerId: string;
+    note: string;
+}

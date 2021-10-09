@@ -23,29 +23,20 @@ jobs:
       - name: Install
         run: npm install
 
-      - name: Build server
+      - name: Build
         run: npm run build
 
-      - name: Install client
-        run: cd client && npm install && cd -
-
-      - name: Build client
-        run: cd client && npm run build-prod && cd -
-
-      - name: Copy static
-        run: mkdir -p dist && cp -R static dist/static
-
-      - name: Copy package.json
-        run: cp package.json dist/package.json
+      - name: Copy client build output
+        run: cp -a client/dist server/dist/static
 
       - name: Copy procfile
-        run: cp Procfile dist/Procfile
+        run: cp Procfile server/dist/Procfile
 
       - name: Copy midi folder
-        run: cp -R midi dist/midi
+        run: cp -a server/midi server/dist/midi
 
       - name: Generate deployment package
-        run: cd dist && zip -r deploy.zip . && cd -
+        run: cd server/dist && zip -r deploy.zip . && cd -
 
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v18

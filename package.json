@@ -1,37 +1,13 @@
 {
-  "name": "backend",
+  "name": "untitled-music-game",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rm dist/bundle.js",
-    "start": "npm run build && cp -R midi dist/midi && node dist/index.js",
-    "build": "tsc",
-    "start:watch": "(nodemon --watch '**' --ext 'ts,json' --ignore 'client/**' --ignore 'dist/**' --ignore 'static/**' --exec 'npm start') & (cd client && npm start)"
-  },
-  "dependencies": {
-    "@tonejs/midi": "^2.0.27",
-    "express": "^4.17.1",
-    "express-basic-auth": "^1.2.0",
-    "express-fileupload": "^1.2.1",
-    "midi-parser-js": "^4.0.4",
-    "node-fetch": "^3.0.0",
-    "socket.io": "^4.2.0",
-    "unique-names-generator": "^4.6.0",
-    "uuid": "^8.3.2"
+    "postinstall": "(cd server && npm install) && (cd client && npm install)",
+    "clean": "(cd server && rm -rf dist) && (cd client && rm -rf dist)",
+    "build": "(cd server && npm run build) && (cd client && npm run build-prod)",
+    "start": "cd server && npm run start:watch"
   },
   "author": "",
-  "license": "ISC",
-  "engines": {
-    "node": ">=14.15.1 <15"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.13",
-    "@types/express-fileupload": "^1.1.7",
-    "@types/uuid": "^8.3.1",
-    "nodemon": "^2.0.13",
-    "typescript": "^4.4.3"
-  }
+  "license": "ISC"
 }
