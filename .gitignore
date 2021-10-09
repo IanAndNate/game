@@ -8,8 +8,3 @@ node_modules
 !.elasticbeanstalk/*.global.yml
 
 dist
-*.js
-static/index.html
-static/*.js
-static/*.txt
-static/*.hot-update.json

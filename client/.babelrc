@@ -8,7 +8,5 @@
     ],
     "@babel/preset-react"
   ],
-  "plugins": [
-    "react-hot-loader/babel", "@babel/transform-runtime"
-  ]
+  "plugins": ["react-hot-loader/babel", "@babel/transform-runtime"]
 }

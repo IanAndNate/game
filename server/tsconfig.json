@@ -9,10 +9,10 @@
     "esModuleInterop": true,
     "rootDir": "src"
   },
-  "include": [
-    "src"
-  ],
-  "references": [{
-    "path": "../client"
-  }]
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../client"
+    }
+  ]
 }

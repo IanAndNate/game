@@ -6,8 +6,28 @@
     "postinstall": "(cd server && npm install) && (cd client && npm install)",
     "clean": "(cd server && rm -rf dist) && (cd client && rm -rf dist)",
     "build": "(cd server && npm run build) && (cd client && npm run build-prod)",
-    "start": "cd server && npm run start:watch"
+    "start": "cd server && npm run start:watch",
+    "lint:server": "cd server && npm run lint:staged",
+    "lint:client": "cd client && npm run lint:staged",
+    "format": "prettier .",
+    "lint": "(cd server && npm run lint) && (cd client && npm run lint) && npm run format -- --check",
+    "prepare": "husky install"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^7.0.2",
+    "lint-staged": "^11.2.1",
+    "prettier": "2.4.1"
+  },
+  "lint-staged": {
+    "server/**/*.ts": [
+      "npm run lint:server -- --fix",
+      "prettier --write"
+    ],
+    "client/**/*.{ts,tsx}": [
+      "npm run lint:client -- --fix",
+      "prettier --write"
+    ]
+  }
 }

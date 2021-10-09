@@ -19,10 +19,7 @@
     "timeSignatures": [
       {
         "ticks": 0,
-        "timeSignature": [
-          3,
-          4
-        ],
+        "timeSignature": [3, 4],
         "measures": 0
       }
     ]
