@@ -29,6 +29,9 @@ jobs:
       - name: Copy client build output
         run: cp -a client/dist server/dist/static
 
+      - name: Copy package.json
+        run: cp server/package.json server/dist/package.json
+
       - name: Copy procfile
         run: cp Procfile server/dist/Procfile
 
