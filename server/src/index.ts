@@ -4,16 +4,17 @@ import { Server, Socket } from 'socket.io';
 import {v4 as uuidv4} from 'uuid';
 import { songsRouter, songs } from './songs.js';
 import { getRandomBitMidiSong } from './bitmidi.js';
-import { KeyPress, Room, ServerPlayer, Song } from './types';
+import { Room, ServerPlayer, Song } from './types';
 import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
-import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo } from './client/shared/types';
+import { RoomInfo, NextRoundProps, RoundInfo, PlayerNote, Player, GameOverInfo, GameOverPlayerRoundInfo, KeyPress } from '../../client/src/shared/types';
 import Midi from '@tonejs/midi';
 import { NoteJSON } from '@tonejs/midi/dist/Note';
 
-const app = express();
+const clientPath = process.env.CLIENT || 'static';
 
+const app = express();
 app.use(songsRouter);
-app.use(express.static(`static`));
+app.use(express.static(clientPath));
 
 const rooms: Room[] = [];
 
@@ -22,7 +23,12 @@ app.get('/new', async (req, res) => {
     let enabledSongs = songs.filter(s => s.enabled);
     if (req.query.bitmidi) {
         const numSongs = parseInt(req.query.bitmidi as string);
-        enabledSongs = await Promise.all([...Array(numSongs)].map(_ => getRandomBitMidiSong(500)));
+        try {
+            enabledSongs = await Promise.all([...Array(numSongs)].map(_ => getRandomBitMidiSong(500)));
+        } catch (err) {
+            res.status(500).send(`Failed to fetch bitmidi songs: ${err.message}`).end();
+            return;
+        }
     }
     if (enabledSongs.length === 0) {
         res.status(500).send('No songs enabled on server').end();
@@ -82,9 +88,9 @@ app.get('/game/:roomId/:roundIdx.mid', (req, res) => {
     res.type('audio/midi').set('Content-disposition', `attachment; filename=${roomId}_${roundIdx}.mid`).send(Buffer.from(midi.toArray())).end();
 });
 
-app.get('*', function (_req, res) {
-    res.sendFile('static/index.html', {root: '.'});
-});
+// app.get('*', function (_req, res) {
+//     res.sendFile(`${clientPath}/index.html`, {root: '.'});
+// });
 
 const index = createServer(app);
 const io = new Server(index);

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "sourceMap": true,
-    "outDir": "/dist",
+    "outDir": "dist",
     "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
@@ -10,9 +10,12 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "lib": ["es2019", "es6", "dom", "webworker"]
+    "lib": ["es2019", "es6", "dom", "webworker"],
+    "composite": true,
+    "declarationMap": true
   },
   "exclude": [
+    "dist",
     "node_modules",
     "./node_modules",
     "./node_modules/*",

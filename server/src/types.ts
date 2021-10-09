@@ -1,5 +1,5 @@
 import { MidiJSON, TrackJSON } from '@tonejs/midi';
-import { PlayerNote } from './client/shared/types';
+import { PlayerNote } from '../../client/src/shared/types';
 
 interface Guess {
     guess: string;
@@ -46,9 +46,4 @@ export interface ServerPlayer {
     notes: PlayerNote[];
     isReady: boolean;
     isBot: boolean;
-}
-
-export interface KeyPress {
-    playerId: string;
-    note: string;
 }

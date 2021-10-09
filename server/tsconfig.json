@@ -6,13 +6,13 @@
     "target": "es6",
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "rootDir": "src"
   },
   "include": [
-    "index.ts",
-    "converter.ts",
-    "songs.ts",
-    "types.ts",
-    "external.d.ts"
+    "src"
   ],
-  "exclude": ["client"]
+  "references": [{
+    "path": "../client"
+  }]
 }

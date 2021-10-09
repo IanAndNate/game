@@ -6,7 +6,7 @@ import { Song } from './types';
 import { RequestHandler } from 'express-serve-static-core';
 import express from 'express';
 import fs from 'fs';
-import { SongInfo } from './client/shared/types';
+import { SongInfo } from '../../client/src/shared/types';
 
 export const songs: Song[] = [];
 

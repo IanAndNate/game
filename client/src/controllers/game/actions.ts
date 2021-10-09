@@ -6,9 +6,8 @@ import {
 import { io } from "socket.io-client";
 import * as Tone from "tone";
 import { MouseEvent } from "react";
-import { KeyPress } from "../../../types";
 import { countDown, median } from "./utils";
-import { NextRoundProps, RoomInfo, RoundInfo } from "../../shared/types";
+import { KeyPress, NextRoundProps, RoomInfo, RoundInfo } from "../../shared/types";
 
 const initSynth =
     () =>
