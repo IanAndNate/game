@@ -23,11 +23,17 @@ export const useGame = createHook<State, Actions>(store);
 export const useCreateAndJoinRoom = () => {
   const history = useHistory();
   return useCallback(
-    async (gameMode: GameMode, maxKeys: number, botAccuracy: number) => {
+    async (
+      gameMode: GameMode,
+      maxKeys: number,
+      botAccuracy: number,
+      playlist?: string
+    ) => {
       const gameModeParams = {
         [GameMode.Standard]: {},
         [GameMode.BitMidi]: { bitmidi: "1" },
         [GameMode.BitMidi5]: { bitmidi: "5" },
+        [GameMode.PlayList]: { playlist },
       };
       const roomIdResponse = await fetch(
         `/new?${new URLSearchParams({

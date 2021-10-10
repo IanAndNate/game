@@ -1,0 +1,38 @@
+{
+  "name": "Piano Classics",
+  "songs": [
+    {
+      "songNames": ["fur elise"],
+      "url": "https://bitmidi.com/uploads/28362.mid"
+    },
+    {
+      "songNames": [
+        "alla turca",
+        "rondo alla turca",
+        "turkish march",
+        "turkish rondo"
+      ],
+      "url": "https://bitmidi.com/uploads/34923.mid"
+    },
+    {
+      "songNames": ["moonlight sonata"],
+      "url": "https://www.8notes.com/school/midi/piano/moonlight_sonata.mid"
+    },
+    {
+      "songNames": ["gymnopedie"],
+      "url": "https://www.8notes.com/school/midi/piano/satie_gymnopedie_no1.mid"
+    },
+    {
+      "songNames": ["blue danube"],
+      "url": "https://www.8notes.com/school/midi/piano/strauss_blue_danube.mid"
+    },
+    {
+      "songNames": ["nocturne in e flat major", "nocturne"],
+      "url": "https://www.8notes.com/school/midi/piano/chopin_nocturne_9_2.mid"
+    },
+    {
+      "songNames": ["clair de lune"],
+      "url": "https://www.8notes.com/school/midi/piano/debussy_clair.mid"
+    }
+  ]
+}

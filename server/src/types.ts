@@ -48,3 +48,19 @@ export interface Room {
   maxKeys: number; // -1 = unlimited, otherwise add bots until all players have < maxKeys
   botAccuracy: number; // 1 = perfect, 0 = will not play any notes
 }
+
+export interface PlayListSong {
+  songNames: string[];
+  url: string;
+}
+
+export interface PlayListSpec {
+  name: string;
+  songs: PlayListSong[];
+}
+
+export interface PlayList {
+  id: string;
+  spec: PlayListSpec;
+  songs: Song[];
+}

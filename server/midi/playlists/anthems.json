@@ -1,0 +1,37 @@
+{
+  "name": "Anthems",
+  "songs": [
+    {
+      "songNames": ["australia", "advance australia fair"],
+      "url": "https://www.8notes.com/school/midi/piano/australia_nat_PNO.mid"
+    },
+    {
+      "songNames": ["france", "la marseilleise"],
+      "url": "https://www.8notes.com/school/midi/piano/la_marseilleise.mid"
+    },
+    {
+      "songNames": ["latvia"],
+      "url": "https://composerconnection.com/midi1/Anthems/world-anthems/latvia.mid"
+    },
+    {
+      "songNames": ["honduras"],
+      "url": "https://composerconnection.com/midi1/Anthems/world-anthems/honduras.mid"
+    },
+    {
+      "songNames": ["netherlands", "wilhelmus"],
+      "url": "https://www.8notes.com/school/midi/piano/wilhelmus_PNO.mid"
+    },
+    {
+      "songNames": ["china", "the march of the volunteers"],
+      "url": "https://www.8notes.com/school/midi/piano/chinese_anthem.mid"
+    },
+    {
+      "songNames": ["america", "usa", "the star spangled banner"],
+      "url": "https://www.8notes.com/school/midi/piano/star_spangled_banner.mid"
+    },
+    {
+      "songNames": ["vietnam"],
+      "url": "https://bitmidi.com/uploads/79491.mid"
+    }
+  ]
+}

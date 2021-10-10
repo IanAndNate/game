@@ -71,3 +71,9 @@ export interface KeyPress {
   playerId: string;
   note: string;
 }
+
+export interface PlayListInfo {
+  id: string;
+  name: string;
+  songs: number;
+}
