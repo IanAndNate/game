@@ -9,7 +9,7 @@ import {
 } from "unique-names-generator";
 import Midi from "@tonejs/midi";
 import { NoteJSON } from "@tonejs/midi/dist/Note";
-import { songsRouter, songs } from "./songs.js";
+import { songsRouter, songs, parseMidiUrl } from "./songs.js";
 import { playlistRouter, playlists } from "./playlists.js";
 import { getRandomBitMidiSong } from "./bitmidi.js";
 import { Room, ServerPlayer, Song } from "./types";
@@ -58,6 +58,10 @@ app.get("/new", async (req, res) => {
       return;
     }
     enabledSongs = shuffle(playlist.songs.filter((s) => s.enabled));
+  }
+  if (req.query.url) {
+    const song = await parseMidiUrl(req.query.url as string);
+    enabledSongs = [song];
   }
   if (enabledSongs.length === 0) {
     res.status(500).send("No songs enabled on server").end();
@@ -142,9 +146,9 @@ app.get("/game/:roomId/:roundIdx.mid", (req, res) => {
     .end();
 });
 
-// app.get('*', function (_req, res) {
-//     res.sendFile(`${clientPath}/index.html`, {root: '.'});
-// });
+app.get("*", (_req, res) => {
+  res.sendFile("index.html", { root: clientPath });
+});
 
 const index = createServer(app);
 const io = new Server(index);
