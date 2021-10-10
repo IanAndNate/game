@@ -8,6 +8,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
   ],
+  ignorePatterns: [".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 12,
@@ -15,10 +16,22 @@ module.exports = {
     tsconfigRootDir: __dirname,
     project: "tsconfig.json",
   },
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "import"],
   rules: {
-    "import/no-unresolved": "warn", // not sure why this doesn't work
-    "import/extensions": "off",
     "no-param-reassign": "warn",
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        ts: "never",
+      },
+    ],
+  },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project: ["./tsconfig.json", "../client/tsconfig.json"],
+      },
+    },
   },
 };
