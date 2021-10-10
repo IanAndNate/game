@@ -15,10 +15,16 @@ module.exports = {
     tsconfigRootDir: __dirname,
     project: "tsconfig.json",
   },
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "import"],
   rules: {
-    "import/no-unresolved": "warn", // not sure why this doesn't work
     "import/extensions": "off",
     "no-param-reassign": "warn",
+  },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project: ["./tsconfig.json", "../client/tsconfig.json"],
+      },
+    },
   },
 };

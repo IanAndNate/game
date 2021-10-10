@@ -1,8 +1,7 @@
 import Midi from "@tonejs/midi";
-import express, { Router } from "express";
+import express, { Router, RequestHandler } from "express";
 import fileUpload from "express-fileupload";
 import fetch from "node-fetch";
-import { RequestHandler } from "express-serve-static-core";
 import fs from "fs";
 import { Song } from "./types";
 import { SongInfo } from "../../client/src/shared/types";
