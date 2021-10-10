@@ -6,6 +6,7 @@ import { Game } from "./ui/game";
 import { GameRouteProps } from "./ui/game/types";
 import { Welcome } from "./ui/welcome";
 import { css, Global } from "@emotion/react";
+import { QuickPlayUrl } from "./ui/quick-play-url";
 
 const GlobalStyles = () => (
   <Global
@@ -43,6 +44,9 @@ const App = () => {
           />
           <Route exact path="/admin">
             <Admin />
+          </Route>
+          <Route path="/url">
+            <QuickPlayUrl />
           </Route>
         </Switch>
       </BrowserRouter>
