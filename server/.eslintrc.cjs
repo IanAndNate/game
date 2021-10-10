@@ -8,6 +8,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
   ],
+  ignorePatterns: [".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 12,
@@ -17,8 +18,14 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "import"],
   rules: {
-    "import/extensions": "off",
     "no-param-reassign": "warn",
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        ts: "never",
+      },
+    ],
   },
   settings: {
     "import/resolver": {
