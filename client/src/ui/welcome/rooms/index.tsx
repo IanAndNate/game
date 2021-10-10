@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { RoomInfo } from "../../../shared/types";
+import { PlayListInfo, RoomInfo } from "../../../shared/types";
 import styled from "@emotion/styled";
 import { useCreateAndJoinRoom } from "../../../controllers/game";
 import { Room, RoomWrapper } from "../../common/room";
@@ -12,12 +12,47 @@ const Wrapper = styled.div`
   }
 `;
 
+const PlayListSelect = ({
+  onChange,
+  disabled,
+}: {
+  onChange: (value: string) => void;
+  disabled: boolean;
+}) => {
+  const [playlists, setPlayLists] = useState<PlayListInfo[]>([]);
+  useEffect(() => {
+    const fetchPlayLists = async () => {
+      const response = await fetch("/playlists");
+      setPlayLists(await response.json());
+    };
+    fetchPlayLists();
+  }, []);
+  useEffect(() => {
+    if (playlists && playlists[0]) {
+      onChange(playlists[0].id); // if we have new data, select the first value
+    }
+  }, [onChange, playlists]);
+  const updateSelect = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange(ev.target.value);
+  };
+  return (
+    <select disabled={disabled} onChange={updateSelect}>
+      {playlists.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.name} ({p.songs} song{p.songs === 1 ? "" : "s"})
+        </option>
+      ))}
+    </select>
+  );
+};
+
 export const Rooms = () => {
   const newGame = useCreateAndJoinRoom();
   const [rooms, setRooms] = useState<RoomInfo[] | null>(null);
   const [mode, setMode] = useState<GameMode>(GameMode.Standard);
   const [maxKeys, setMaxKeys] = useState<number>(-1);
   const [botAccuracy, setBotAccuracy] = useState<number>(1);
+  const [playlist, setPlayList] = useState<string | null>(null);
   const fetchRooms = useCallback(async () => {
     setRooms(null);
     const response = await fetch("/rooms");
@@ -57,7 +92,12 @@ export const Rooms = () => {
         <option value={GameMode.BitMidi5}>
           play 5 random bitmidi.com songs
         </option>
+        <option value={GameMode.PlayList}>use a playlist</option>
       </select>
+      <PlayListSelect
+        onChange={setPlayList}
+        disabled={mode !== GameMode.PlayList}
+      />
       <select onChange={updateMaxKeys} value={maxKeys}>
         <option value={-1}>unlimited keys per player</option>
         {[4, 6, 8, 10].map((k) => (
@@ -72,7 +112,16 @@ export const Rooms = () => {
         <option value={0.6}>use bad bots</option>
         <option value={0.3}>use stupid bots</option>
       </select>
-      <button onClick={() => newGame(mode, maxKeys, botAccuracy)}>
+      <button
+        onClick={() =>
+          newGame(
+            mode,
+            maxKeys,
+            botAccuracy,
+            mode === GameMode.PlayList ? playlist : undefined
+          )
+        }
+      >
         New game
       </button>
       <button onClick={fetchRooms}>Refresh</button>

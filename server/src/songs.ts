@@ -44,6 +44,13 @@ export const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
   };
 };
 
+export const parseMidiUrl = async (url: string): Promise<Song> => {
+  const midiResponse = await fetch(url);
+  const blob = await midiResponse.blob();
+  const data = await blob.arrayBuffer();
+  return parseMidi(url, data);
+};
+
 const INITIAL_SONGS: SongDef[] = [
   {
     fileName: "amazgrac04.mid",
@@ -74,19 +81,17 @@ const initSongs = () => {
   });
 };
 
+export const getSongInfo = (song: Song): SongInfo => ({
+  fileName: song.fileName,
+  songNames: song.songNames,
+  enabled: song.enabled,
+  uniqueNotes: song.uniqueNotes.length,
+  totalNotes: song.music.length,
+  duration: Math.max(...song.music.map((n) => n.time + n.duration)),
+});
+
 const getSongs: RequestHandler = (_req, res) => {
-  res.send(
-    JSON.stringify(
-      songs.map<SongInfo>((song) => ({
-        fileName: song.fileName,
-        songNames: song.songNames,
-        enabled: song.enabled,
-        uniqueNotes: song.uniqueNotes.length,
-        totalNotes: song.music.length,
-        duration: Math.max(...song.music.map((n) => n.time + n.duration)),
-      }))
-    )
-  );
+  res.send(JSON.stringify(songs.map<SongInfo>(getSongInfo)));
 };
 
 const addSong = (name: string, data: ArrayBuffer) => {

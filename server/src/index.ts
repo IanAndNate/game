@@ -10,6 +10,7 @@ import {
 import Midi from "@tonejs/midi";
 import { NoteJSON } from "@tonejs/midi/dist/Note";
 import { songsRouter, songs } from "./songs.js";
+import { playlistRouter, playlists } from "./playlists.js";
 import { getRandomBitMidiSong } from "./bitmidi.js";
 import { Room, ServerPlayer, Song } from "./types";
 import {
@@ -22,11 +23,13 @@ import {
   GameOverPlayerRoundInfo,
   KeyPress,
 } from "../../client/src/shared/types";
+import { compareNotes, shuffle } from "./utils.js";
 
 const clientPath = process.env.CLIENT || "static";
 
 const app = express();
 app.use(songsRouter);
+app.use(playlistRouter);
 app.use(express.static(clientPath));
 
 const rooms: Room[] = [];
@@ -47,6 +50,14 @@ app.get("/new", async (req, res) => {
         .end();
       return;
     }
+  }
+  if (req.query.playlist) {
+    const playlist = playlists.find((p) => p.id === req.query.playlist);
+    if (!playlist) {
+      res.status(404).send("No such playlist ID").end();
+      return;
+    }
+    enabledSongs = shuffle(playlist.songs.filter((s) => s.enabled));
   }
   if (enabledSongs.length === 0) {
     res.status(500).send("No songs enabled on server").end();
@@ -221,26 +232,6 @@ const getRoomId = (socket: Socket): string | undefined => {
   return undefined;
 };
 
-function shuffle<T>(arr: T[]): T[] {
-  const array = [...arr];
-  let currentIndex = array.length;
-  let randomIndex;
-
-  // While there remain elements to shuffle...
-  while (currentIndex !== 0) {
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex],
-      array[currentIndex],
-    ];
-  }
-  return array;
-}
-
 const roomInfoBroadcast = (room: Room) => {
   room.players
     .filter((p) => !p.isBot)
@@ -301,31 +292,6 @@ const createBot = (): ServerPlayer => ({
 const addBot = (room: Room) => {
   room.players.push(createBot());
   roomInfoBroadcast(room);
-};
-
-const ORDERED_NOTES = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
-];
-const compareNotes = (a: string, b: string): number => {
-  const octaveA = parseInt(a.slice(-1), 10);
-  const octaveB = parseInt(b.slice(-1), 10);
-  if (octaveA !== octaveB) {
-    return octaveA - octaveB;
-  }
-  const noteA = ORDERED_NOTES.indexOf(a.slice(0, a.length - 1));
-  const noteB = ORDERED_NOTES.indexOf(b.slice(0, b.length - 1));
-  return noteA - noteB;
 };
 
 // analyse a song and find the most significant melody notes

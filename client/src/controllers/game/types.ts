@@ -16,6 +16,7 @@ export enum GameMode {
   Standard = "standard",
   BitMidi = "bitmidi",
   BitMidi5 = "bitmidi5",
+  PlayList = "playlist",
 }
 
 interface Guess {
