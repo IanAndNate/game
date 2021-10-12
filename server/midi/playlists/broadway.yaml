@@ -1,0 +1,50 @@
+name: Broadway
+songs:
+  - url: https://bitmidi.com/uploads/22538.mid
+    songNames:
+      - cats
+      - memory
+  - url: http://sng.nu/midi/368586.mid
+    songNames:
+      - les miserables
+      - i dreamed a dream
+  - url: http://www.hamienet.com/2721_Anthem.mid
+    songNames:
+      - chess
+      - anthem
+  - url: https://bitmidi.com/uploads/59359.mid
+    songNames:
+      - fame
+      - i sing the body electric
+  - url: https://www.mididb.com/midi-download/AUD_DW0197.mid
+    songNames:
+      - hamilton
+      - you'll be back
+  - url: https://www.hamienet.com/20952_This-is-the-Moment.mid
+    songNames:
+      - jekyll and hyde
+      - this is the moment
+  - url: http://www.hamienet.com/2779_Close-Every-Door.mid
+    songNames:
+      - joseph and the technicolour dreamcoat
+      - close every door
+  - url: https://bitmidi.com/uploads/97737.mid
+    songNames:
+      - little shop of horrors
+      - suddenly seymour
+  - url: https://bitmidi.com/uploads/20454.mid
+    songNames:
+      - miss saigon
+      - bui doi
+  - url: https://bitmidi.com/uploads/76585.mid
+    songNames:
+      - phantom of the opera
+      - music of the night
+  - url: http://www.hamienet.com/12055_Lilys-Eyes.mid
+    songNames:
+      - secret garden
+      - lily's eyes
+  - url: http://www.hamienet.com/12243_Greatest-Star-of-All-The.mid
+    songNames:
+      - sunset boulevard
+      - the greatest star of all

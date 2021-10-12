@@ -51,6 +51,18 @@ export const parseMidiUrl = async (url: string): Promise<Song> => {
   return parseMidi(url, data);
 };
 
+export const parseMidiUrls = async (urls: string[]): Promise<Song[]> => {
+  const fetchOne = async (url: string): Promise<Song | null> => {
+    try {
+      return await parseMidiUrl(url);
+    } catch (err) {
+      console.error("Failed to fetch MIDI", url, err);
+      return null;
+    }
+  };
+  return (await Promise.all(urls.map(fetchOne))).filter((s) => s !== null);
+};
+
 const INITIAL_SONGS: SongDef[] = [
   {
     fileName: "amazgrac04.mid",

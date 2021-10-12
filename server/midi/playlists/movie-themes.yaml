@@ -1,0 +1,13 @@
+name: Movie Themes
+songs:
+  - url: http://moviethemes.net/music/E/E.T.__Flying_Theme.mid
+    songNames:
+      - et
+      - flying
+  - url: https://bitmidi.com/uploads/8686.mid
+    songNames:
+      - axel f
+      - beverly hills cop
+  - url: https://bitmidi.com/uploads/69987.mid
+    songNames:
+      - love story
