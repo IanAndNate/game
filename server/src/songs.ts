@@ -52,17 +52,29 @@ export const parseMidiUrl = async (url: string): Promise<Song> => {
 };
 
 const INITIAL_SONGS: SongDef[] = [
+  // {
+  //   fileName: "amazgrac04.mid",
+  //   songNames: ["amazing grace"],
+  // },
+  // {
+  //   fileName: "tetris.mid",
+  //   songNames: ["tetris", "korobeiniki"],
+  // },
+  // {
+  //   fileName: "pirates.mid",
+  //   songNames: ["pirates of the carribean", "hes a pirate"],
+  // },
   {
-    fileName: "amazgrac04.mid",
-    songNames: ["amazing grace"],
+    fileName: "HeartAndSoul.mid",
+    songNames: ["heart and soul"],
   },
   {
-    fileName: "tetris.mid",
-    songNames: ["tetris", "korobeiniki"],
+    fileName: "zelda.mid",
+    songNames: ["zelda", "legend of zelda", "zelda overworld"],
   },
   {
-    fileName: "pirates.mid",
-    songNames: ["pirates of the carribean", "hes a pirate"],
+    fileName: "tetris_2hands.mid",
+    songNames: ["tetris"],
   },
 ];
 
