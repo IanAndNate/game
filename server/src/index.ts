@@ -9,7 +9,7 @@ import {
 } from "unique-names-generator";
 import Midi from "@tonejs/midi";
 import { NoteJSON } from "@tonejs/midi/dist/Note";
-import { songsRouter, songs, parseMidiUrl } from "./songs.js";
+import { songsRouter, songs, loadSong } from "./songs.js";
 import { playlistRouter, playlists } from "./playlists.js";
 import { getRandomBitMidiSong } from "./bitmidi.js";
 import { Room, ServerPlayer, Song } from "./types";
@@ -61,7 +61,7 @@ app.get("/new", async (req, res) => {
     enabledSongs = shuffle(playlist.songs.filter((s) => s.enabled));
   }
   if (req.query.url) {
-    const song = await parseMidiUrl(req.query.url as string);
+    const song = await loadSong(req.query.url as string);
     enabledSongs = [song];
   }
   if (enabledSongs.length === 0) {

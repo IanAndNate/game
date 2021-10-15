@@ -44,11 +44,15 @@ export const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
   };
 };
 
-export const parseMidiUrl = async (url: string): Promise<Song> => {
-  const midiResponse = await fetch(url);
-  const blob = await midiResponse.blob();
-  const data = await blob.arrayBuffer();
-  return parseMidi(url, data);
+export const loadSong = async (urlOrFile: string): Promise<Song> => {
+  if (urlOrFile.startsWith("http")) {
+    const response = await fetch(urlOrFile);
+    const blob = await response.blob();
+    const data = await blob.arrayBuffer();
+    return parseMidi(urlOrFile, data);
+  }
+  const data = fs.readFileSync(urlOrFile);
+  return parseMidi(urlOrFile, data);
 };
 
 const INITIAL_SONGS: SongDef[] = [
@@ -79,10 +83,9 @@ const INITIAL_SONGS: SongDef[] = [
 ];
 
 const initSongs = () => {
-  fs.readdirSync("./midi").forEach((file) => {
+  fs.readdirSync("./midi").forEach(async (file) => {
     if (file.endsWith(".mid")) {
-      const data = fs.readFileSync(`./midi/${file}`);
-      const song = parseMidi(file, data);
+      const song = await loadSong(`./midi/${file}`);
       const songDef = INITIAL_SONGS.find((s) => s.fileName === file);
       songs.push({
         ...song,
@@ -106,21 +109,13 @@ const getSongs: RequestHandler = (_req, res) => {
   res.send(JSON.stringify(songs.map<SongInfo>(getSongInfo)));
 };
 
-const addSong = (name: string, data: ArrayBuffer) => {
-  const idx = songs.findIndex((s) => s.fileName === name);
-  const newSong = parseMidi(name, data);
+const addSong = (song: Song) => {
+  const idx = songs.findIndex((s) => s.fileName === song.fileName);
   if (idx !== -1) {
-    songs[idx] = newSong;
+    songs[idx] = song;
   } else {
-    songs.push(newSong);
+    songs.push(song);
   }
-};
-
-const addRemoteSong = async (url: string) => {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const data = await blob.arrayBuffer();
-  addSong(url.split("/").pop(), data);
 };
 
 const postSongs: RequestHandler = (req, res, next) => {
@@ -129,8 +124,9 @@ const postSongs: RequestHandler = (req, res, next) => {
       if (req.query.url) {
         // security risk!!
         const url = req.query.url as string;
-        addRemoteSong(url)
-          .then(() => {
+        loadSong(url)
+          .then((song) => {
+            addSong(song);
             getSongs(req, res, next);
             res.end();
           })
@@ -145,9 +141,9 @@ const postSongs: RequestHandler = (req, res, next) => {
       throw new Error('no song uploaded, try curl -F "song=@filename.mid"');
     }
     if (Array.isArray(song)) {
-      song.forEach((s) => addSong(s.name, s.data));
+      song.forEach((s) => addSong(parseMidi(s.name, s.data)));
     } else {
-      addSong(song.name, song.data);
+      addSong(parseMidi(song.name, song.data));
     }
     getSongs(req, res, next);
   } catch (err) {

@@ -8,19 +8,20 @@ import express, { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import { PlayListInfo } from "../../client/src/shared/types.js";
-import { parseMidiUrl } from "./songs.js";
+import { loadSong } from "./songs.js";
 import { PlayList, PlayListSpec } from "./types";
 
 export const playlists: PlayList[] = [];
 
 const loadPlayList = async (spec: PlayListSpec): Promise<PlayList> => {
-  const midis = await Promise.all(spec.songs.map((s) => parseMidiUrl(s.url)));
+  const midis = await Promise.all(spec.songs.map((s) => loadSong(s.url)));
   return {
     id: uuidv4(),
     spec,
     songs: spec.songs.map((s) => ({
       ...midis.find((m) => m.fileName === s.url),
       songNames: s.songNames,
+      enabled: true,
     })),
   };
 };
