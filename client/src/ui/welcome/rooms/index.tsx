@@ -53,6 +53,8 @@ export const Rooms = () => {
   const [maxKeys, setMaxKeys] = useState<number>(-1);
   const [botAccuracy, setBotAccuracy] = useState<number>(1);
   const [playlist, setPlayList] = useState<string | null>(null);
+  const [splitByTracks, setSplitByTracks] = useState<boolean>(false);
+
   const fetchRooms = useCallback(async () => {
     setRooms(null);
     const response = await fetch("/rooms");
@@ -66,7 +68,12 @@ export const Rooms = () => {
   }, []);
   const updateMaxKeys = useCallback(
     (ev: React.ChangeEvent<HTMLSelectElement>) => {
-      setMaxKeys(parseInt(ev.target.value));
+      if (ev.target.value === "splitByTracks") {
+        setSplitByTracks(true);
+      } else {
+        setMaxKeys(parseInt(ev.target.value));
+        setSplitByTracks(false);
+      }
     },
     []
   );
@@ -98,8 +105,14 @@ export const Rooms = () => {
         onChange={setPlayList}
         disabled={mode !== GameMode.PlayList}
       />
-      <select onChange={updateMaxKeys} value={maxKeys}>
+      <select
+        onChange={updateMaxKeys}
+        value={splitByTracks ? "splitByTracks" : maxKeys}
+      >
         <option value={-1}>unlimited keys per player</option>
+        <option value="splitByTracks">
+          allocate notes by tracks (requires curated MIDIs)
+        </option>
         {[4, 6, 8, 10].map((k) => (
           <option key={k} value={k}>
             maximum {k} keys
@@ -114,12 +127,13 @@ export const Rooms = () => {
       </select>
       <button
         onClick={() =>
-          newGame(
+          newGame({
             mode,
             maxKeys,
             botAccuracy,
-            mode === GameMode.PlayList ? playlist : undefined
-          )
+            playlist: mode === GameMode.PlayList ? playlist : undefined,
+            splitByTracks,
+          })
         }
       >
         New game

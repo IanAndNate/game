@@ -69,30 +69,30 @@ export const loadSongs = async (urls: string[]): Promise<Song[]> => {
 };
 
 const INITIAL_SONGS: SongDef[] = [
-  // {
-  //   fileName: "amazgrac04.mid",
-  //   songNames: ["amazing grace"],
-  // },
-  // {
-  //   fileName: "tetris.mid",
-  //   songNames: ["tetris", "korobeiniki"],
-  // },
-  // {
-  //   fileName: "pirates.mid",
-  //   songNames: ["pirates of the carribean", "hes a pirate"],
-  // },
   {
-    fileName: "HeartAndSoul.mid",
-    songNames: ["heart and soul"],
+    fileName: "amazgrac04.mid",
+    songNames: ["amazing grace"],
   },
   {
-    fileName: "zelda.mid",
-    songNames: ["zelda", "legend of zelda", "zelda overworld"],
+    fileName: "tetris.mid",
+    songNames: ["tetris", "korobeiniki"],
   },
   {
-    fileName: "tetris_2hands.mid",
-    songNames: ["tetris"],
+    fileName: "pirates.mid",
+    songNames: ["pirates of the carribean", "hes a pirate"],
   },
+  // {
+  //   fileName: "HeartAndSoul.mid",
+  //   songNames: ["heart and soul"],
+  // },
+  // {
+  //   fileName: "zelda.mid",
+  //   songNames: ["zelda", "legend of zelda", "zelda overworld"],
+  // },
+  // {
+  //   fileName: "tetris_2hands.mid",
+  //   songNames: ["tetris"],
+  // },
 ];
 
 const initSongs = () => {
