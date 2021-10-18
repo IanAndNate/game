@@ -55,16 +55,17 @@ export const loadSong = async (urlOrFile: string): Promise<Song> => {
   return parseMidi(urlOrFile, data);
 };
 
-export const parseMidiUrls = async (urls: string[]): Promise<Song[]> => {
-  const fetchOne = async (url: string): Promise<Song | null> => {
+// if a song fails to load, it is simply skipped
+export const loadSongs = async (urls: string[]): Promise<Song[]> => {
+  const loadOne = async (url: string): Promise<Song | null> => {
     try {
-      return await parseMidiUrl(url);
+      return await loadSong(url);
     } catch (err) {
       console.error("Failed to fetch MIDI", url, err);
       return null;
     }
   };
-  return (await Promise.all(urls.map(fetchOne))).filter((s) => s !== null);
+  return (await Promise.all(urls.map(loadOne))).filter((s) => s !== null);
 };
 
 const INITIAL_SONGS: SongDef[] = [
