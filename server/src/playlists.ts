@@ -7,14 +7,15 @@
 import express, { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
+import yaml from "js-yaml";
 import { PlayListInfo } from "../../client/src/shared/types.js";
-import { loadSong } from "./songs.js";
+import { loadSongs } from "./songs.js";
 import { PlayList, PlayListSpec } from "./types";
 
 export const playlists: PlayList[] = [];
 
 const loadPlayList = async (spec: PlayListSpec): Promise<PlayList> => {
-  const midis = await Promise.all(spec.songs.map((s) => loadSong(s.url)));
+  const midis = await loadSongs(spec.songs.map((s) => s.url));
   return {
     id: uuidv4(),
     spec,
@@ -30,10 +31,12 @@ const loadPlayList = async (spec: PlayListSpec): Promise<PlayList> => {
 const PLAYLISTS_PATH = "./midi/playlists";
 const initPlayLists = async () => {
   fs.readdirSync(PLAYLISTS_PATH).forEach(async (file) => {
-    if (file.endsWith(".json")) {
+    if (file.endsWith(".json") || file.endsWith(".yaml")) {
       try {
         const spec = fs.readFileSync(`./${PLAYLISTS_PATH}/${file}`, "utf8");
-        const list = await loadPlayList(JSON.parse(spec));
+        const list = await loadPlayList(
+          file.endsWith("json") ? JSON.parse(spec) : yaml.load(spec)
+        );
         console.log(
           "loaded playlist",
           list.spec.name,
@@ -42,7 +45,7 @@ const initPlayLists = async () => {
         );
         playlists.push(list);
       } catch (err) {
-        console.error("Failed to load playlist", file);
+        console.error("Failed to load playlist", file, err);
       }
     }
   });
