@@ -79,6 +79,9 @@ app.get("/new", async (req, res) => {
   let splitByTracks = false;
   if (req.query.splitByTracks) {
     splitByTracks = req.query.splitByTracks === "true";
+    if (maxKeys < 0) {
+      maxKeys = 10; // only use 1 row of the keyboard max
+    }
   }
   const newRoom: Room = {
     roomId,
@@ -222,14 +225,6 @@ function getRandomNumber(min: number, max: number) {
   return result;
 }
 
-function createArrayOfNumber(start: number, end: number) {
-  const myArray = [];
-  for (let i = start; i <= end; i += 1) {
-    myArray.push(i);
-  }
-  return myArray;
-}
-
 const getRoomId = (socket: Socket): string | undefined => {
   const entries = socket.rooms.values();
   if (entries) {
@@ -290,6 +285,7 @@ const gameOverBroadcast = (room: Room) => {
 const createBot = (): ServerPlayer => ({
   id: uuidv4(),
   notes: [],
+  assignedPart: [],
   name: `${uniqueNamesGenerator({
     dictionaries: [adjectives, animals],
     separator: " ",
@@ -309,26 +305,23 @@ const addBot = (room: Room) => {
 // grouping all notes by time
 // filter out all the highest notes in each "chord"
 // order by frequency
-const getOrderedMelodyNotes = (song: Song) => {
+const getOrderedMelodyNotes = (allNotes: NoteJSON[]) => {
   // figure out the highest notes in each timeslice
-  const highestNotes = song.music.reduce<Record<number, NoteJSON>>(
-    (g, note) => {
-      if (!g[note.time]) {
-        g[note.time] = note;
-      } else if (compareNotes(g[note.time].name, note.name) < 0) {
-        g[note.time] = note;
-      }
-      return g;
-    },
-    {}
-  );
+  const highestNotes = allNotes.reduce<Record<number, NoteJSON>>((g, note) => {
+    if (!g[note.time]) {
+      g[note.time] = note;
+    } else if (compareNotes(g[note.time].name, note.name) < 0) {
+      g[note.time] = note;
+    }
+    return g;
+  }, {});
   // count how many times the notes are the highest note
   const counted = Object.values(highestNotes).reduce<Record<string, number>>(
     (c, note) => {
       c[note.name] += 1;
       return c;
     },
-    song.music.reduce<Record<string, number>>((i, note) => {
+    allNotes.reduce<Record<string, number>>((i, note) => {
       i[note.name] = 0;
       return i;
     }, {})
@@ -391,51 +384,81 @@ const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy = 0.9) => {
   });
 };
 
-const limitRange = (note: string): string => {
-  // HAX transpose any key <= C3 to an octave up
-  if (compareNotes(note, "C3") <= 0) {
-    const octave = parseInt(note.slice(-1), 10);
-    const x = `${note.slice(0, -1)}${Math.max(octave + 1, 3)}`;
-    return x;
-  }
-  return note;
-};
+// const limitRange = (note: string): string => {
+//   // HAX transpose any key <= C3 to an octave up
+//   if (compareNotes(note, "C3") <= 0) {
+//     const octave = parseInt(note.slice(-1), 10);
+//     const x = `${note.slice(0, -1)}${Math.max(octave + 1, 3)}`;
+//     return x;
+//   }
+//   return note;
+// };
 
 const assignKeysByTracks = (room: Room) => {
   const round = room.rounds[room.currentRound];
   const { song } = round;
-  const validTracks = song.midiArray.tracks.filter((t) => t.notes.length > 0);
+  const validTracks = shuffle(
+    song.midiArray.tracks.filter((t) => t.notes.length > 0)
+  );
+
   // delete all bots
   room.players = room.players.filter((p) => !p.isBot);
-  const botsNeeded = validTracks.length - room.players.length;
-  if (botsNeeded > 0) {
-    room.players.push(...[...Array(botsNeeded)].map(createBot));
+
+  // create a single bot
+  const botPlayer = createBot();
+
+  // assign tracks to real players
+  room.players.forEach((player, idx) => {
+    player.track = validTracks[idx % validTracks.length];
+    const notes = getOrderedMelodyNotes(player.track.notes);
+    const playerNotes = notes.slice(0, room.maxKeys);
+    const botNotes = notes.slice(room.maxKeys);
+    player.notes = playerNotes.map((note) => ({
+      key: "?",
+      note,
+    }));
+    player.assignedPart = player.track.notes.filter((n) =>
+      playerNotes.includes(n.name)
+    );
+    botPlayer.notes = [
+      ...botPlayer.notes,
+      ...botNotes.map((note) => ({
+        key: "?",
+        note,
+      })),
+    ];
+    botPlayer.assignedPart = [
+      ...botPlayer.assignedPart,
+      ...player.track.notes.filter((n) => botNotes.includes(n.name)),
+    ];
+  });
+
+  // assign all remaining tracks to the bot
+  validTracks.slice(room.players.length).forEach((track) => {
+    const notes = getOrderedMelodyNotes(track.notes);
+    botPlayer.notes = [
+      ...botPlayer.notes,
+      ...notes.map((note) => ({
+        key: "?",
+        note,
+      })),
+    ];
+    botPlayer.assignedPart = [...botPlayer.assignedPart, ...track.notes];
+  });
+
+  if (botPlayer.notes.length > 0) {
+    // add a bot if needed
+    room.players.push(botPlayer);
   }
   roomInfoBroadcast(room);
-  // randomly assign a track per player
-  shuffle(validTracks).forEach((track, idx) => {
-    room.players[idx].track = track;
-    room.players[idx].notes = track.notes.reduce<PlayerNote[]>(
-      (notes, note) => {
-        const transposedNote = limitRange(note.name);
-        return [
-          ...notes.filter((n) => n.note !== transposedNote),
-          {
-            key: "?",
-            note: transposedNote,
-          },
-        ];
-      },
-      []
-    );
-  });
+
   // assign keys so that the notes are low to high
   room.players.forEach((h) => {
     h.notes = h.notes
       .sort((a, b) => compareNotes(a.note, b.note))
       .map((note, idx) => ({
         note: note.note,
-        key: KEYBOARD_KEYS[idx],
+        key: KEYBOARD_KEYS[idx] || `key-${idx}`, // bots can have a LOT of keys
       }));
   });
 };
@@ -462,7 +485,7 @@ const assignKeysDefault = (room: Room) => {
   const { players } = room;
   const bots = players.filter((p) => p.isBot);
   const humans = shuffle(players.filter((p) => !p.isBot));
-  const sortedNotes = getOrderedMelodyNotes(song);
+  const sortedNotes = getOrderedMelodyNotes(song.music);
   const numHumanNotes = Math.ceil(
     sortedNotes.length * (humans.length / players.length)
   );
@@ -507,8 +530,8 @@ const getSongNotesForPlayer = (
   splitByTracks: boolean
 ): Note[] => {
   if (splitByTracks) {
-    return player.track?.notes.map(({ name, time, duration }) => ({
-      key: player.notes.find((n) => n.note === limitRange(name))?.key,
+    return player.assignedPart.map(({ name, time, duration }) => ({
+      key: player.notes.find((n) => n.note === name)?.key,
       time,
       duration,
     }));
@@ -519,9 +542,21 @@ const getSongNotesForPlayer = (
   });
 };
 
+// returns the mode of the array
+const mostFrequentElement = <T extends any>(arr: T[]): T => {
+  return [...arr]
+    .sort(
+      (a, b) =>
+        arr.filter((v) => v === a).length - arr.filter((v) => v === b).length
+    )
+    .pop();
+};
+
 const startNextRound = (room: Room) => {
+  // use player votes to decide what round to start next
+  const votes = room.players.filter((p) => !p.isBot).map((p) => p.vote);
+  room.currentRound = mostFrequentElement(votes.map((v) => v.nextRound));
   // start a new round, clear stuff from previous round
-  room.currentRound += 1;
   room.players.forEach((p) => {
     p.notes = [];
   });
@@ -539,7 +574,7 @@ const startNextRound = (room: Room) => {
 
   room.players.forEach((player) => {
     const roundInfo: RoundInfo = {
-      speedFactor: round.speedFactor,
+      speedFactor: mostFrequentElement(votes.map((v) => v.speedFactor)),
       notes: player.notes,
       song: getSongNotesForPlayer(song, player, room.splitByTracks),
       startTime,
@@ -590,6 +625,7 @@ io.on("connection", (socket) => {
       room.players.push({
         id: socket.id,
         notes: [],
+        assignedPart: [],
         name: uniqueNamesGenerator({
           dictionaries: [adjectives, animals],
           separator: " ",
@@ -649,16 +685,21 @@ io.on("connection", (socket) => {
     const room = rooms.find(({ roomId: id }) => id === roomId);
 
     if (room) {
-      if (room.currentRound + 1 !== round || round >= room.rounds.length) {
-        return; // already starting?
+      if (round < 0 || round >= room.rounds.length) {
+        return; // index out-of-bounds
       }
       room.rounds[round].speedFactor = speedFactor;
       const player = room.players.find((p) => p.id === socket.id);
       player.isReady = true;
+      player.vote = {
+        speedFactor,
+        nextRound: round,
+      };
       if (!room.players.every((p) => p.isReady)) {
         roomInfoBroadcast(room);
         return; // not everyone is ready yet, but broadcast the updated readiness
       }
+      // once everyone is ready, start the next round
       startNextRound(room);
     }
   });

@@ -1,4 +1,5 @@
 import { MidiJSON, TrackJSON } from "@tonejs/midi";
+import { NoteJSON } from "@tonejs/midi/dist/Note";
 import { PlayerNote } from "../../client/src/shared/types";
 
 interface Guess {
@@ -36,9 +37,14 @@ export interface ServerPlayer {
   id: string;
   name: string;
   notes: PlayerNote[];
+  assignedPart: NoteJSON[];
   track?: TrackJSON;
   isReady: boolean;
   isBot: boolean;
+  vote?: {
+    nextRound: number;
+    speedFactor: number;
+  };
 }
 
 export interface Room {

@@ -7,6 +7,7 @@ import { GameStatus } from "../../../controllers/game/types";
 const Wrapper = styled.div`
   button {
     margin-bottom: 8px;
+    margin-right: 8px;
   }
 `;
 
@@ -34,7 +35,7 @@ export const Guess = () => {
       totalRounds,
       guesses,
     },
-    { startNextRound, makeGuess, endGame },
+    { startRound, makeGuess, endGame },
   ] = useGame();
   const [guess, setGuess] = useState<string>("");
   const isLastRound = currentRound + 1 === totalRounds;
@@ -43,8 +44,11 @@ export const Guess = () => {
       endGame();
       return;
     }
-    startNextRound({ speedFactor });
-  }, [isLastRound, startNextRound, speedFactor, endGame]);
+    startRound({ speedFactor, round: currentRound + 1 });
+  }, [isLastRound, startRound, speedFactor, currentRound, endGame]);
+  const repeatRound = useCallback(() => {
+    startRound({ speedFactor, round: currentRound });
+  }, [currentRound, speedFactor, startRound]);
   const updateGuess = (ev: React.ChangeEvent<HTMLInputElement>) => {
     setGuess(ev.target.value);
   };
@@ -56,6 +60,8 @@ export const Guess = () => {
   const hasCorrect = guesses.find((g) => g.isCorrect) !== undefined;
   const isReady = players.find((p) => p.isCurrent)?.isReady;
   const waitingFor = players.filter((p) => !p.isReady).length;
+
+  const nextRoundLabel = isLastRound ? "End game" : "Next round";
 
   return (
     <Wrapper>
@@ -83,8 +89,9 @@ export const Guess = () => {
       </form>
       <Guesses />
       <button onClick={next} disabled={isReady}>
-        {hasCorrect ? (isLastRound ? "End game" : "Ready") : "Give up"}
+        {hasCorrect ? nextRoundLabel : `Pass (${nextRoundLabel})`}
       </button>
+      <button onClick={repeatRound}>Repeat this round</button>
       {status === GameStatus.Guessing && (
         <div>
           <a

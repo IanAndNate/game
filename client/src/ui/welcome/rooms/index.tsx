@@ -49,7 +49,7 @@ const PlayListSelect = ({
 export const Rooms = () => {
   const newGame = useCreateAndJoinRoom();
   const [rooms, setRooms] = useState<RoomInfo[] | null>(null);
-  const [mode, setMode] = useState<GameMode>(GameMode.Standard);
+  const [mode, setMode] = useState<GameMode>(GameMode.PlayList);
   const [maxKeys, setMaxKeys] = useState<number>(-1);
   const [botAccuracy, setBotAccuracy] = useState<number>(1);
   const [playlist, setPlayList] = useState<string | null>(null);

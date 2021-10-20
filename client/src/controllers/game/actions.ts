@@ -203,16 +203,16 @@ export const leaveRoom =
     });
   };
 
-export const startNextRound =
-  ({ speedFactor }: { speedFactor: number }) =>
+export const startRound =
+  ({ speedFactor, round }: { speedFactor: number; round: number }) =>
   ({ getState }: StoreActionApi<State>) => {
-    const { socket, currentRound, totalRounds } = getState();
-    if (currentRound + 1 === totalRounds) {
+    const { socket, totalRounds } = getState();
+    if (round < 0 || round >= totalRounds) {
       return;
     }
     const nextRound: NextRoundProps = {
       speedFactor,
-      round: currentRound + 1,
+      round,
     };
     socket.emit("request start round", nextRound);
   };

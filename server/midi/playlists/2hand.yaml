@@ -3,9 +3,39 @@ songs:
   - url: ./midi/playlists/2hand/HeartAndSoul.mid
     songNames:
       - heart and soul
-  - url: ./midi/playlists/2hand/tetris_2hands.mid
-    songNames:
-      - tetris
   - url: ./midi/playlists/2hand/zelda.mid
     songNames:
       - zelda
+  - url: ./midi/playlists/2hand/greensleeves.mid
+    songNames:
+      - greensleeves
+  - url: ./midi/playlists/2hand/hallelujah.mid
+    songNames:
+      - hallelujah
+  - url: ./midi/playlists/2hand/danny_boy.mid
+    songNames:
+      - o danny boy
+      - danny boy
+      - londonderry air
+  - url: ./midi/playlists/2hand/moon_represents_my_heart.mid
+    songNames:
+      - the moon represents my heart
+      - 月亮代表我的心
+  - url: ./midi/playlists/2hand/scarborough_fair.mid
+    songNames:
+      - scarborough fair
+  - url: ./midi/playlists/2hand/minuet_in_g.mid
+    songNames:
+      - minuet in g
+      - minuet
+  - url: ./midi/playlists/2hand/love_story.mid
+    songNames:
+      - love story
+  - url: ./midi/playlists/2hand/zelda_lullaby.mid
+    songNames:
+      - zelda
+      - zelda's lullaby
+      - ocarina of time
+  - url: ./midi/playlists/2hand/rose.mid
+    songNames:
+      - the rose

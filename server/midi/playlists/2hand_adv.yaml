@@ -1,0 +1,26 @@
+name: Songs with left/right hand tracks (advanced)
+songs:
+  - url: ./midi/playlists/2hand/tetris_2hands.mid
+    songNames:
+      - tetris
+  - url: ./midi/playlists/2hand/jurassic_park_hard.mid
+    songNames:
+      - jurassic park
+  - url: ./midi/playlists/2hand/canon_in_d.mid
+    songNames:
+      - canon in d
+      - pachelbel's canon
+  - url: ./midi/playlists/2hand/fur_elise.mid
+    songNames:
+      - fur elise
+  - url: ./midi/playlists/2hand/isabellas_lullaby.mid
+    songNames:
+      - isabellas lullaby
+      - the promised neverland
+  - url: ./midi/playlists/2hand/parasyte.mid
+    songNames:
+      - parasyte
+      - next to you
+  - url: ./midi/playlists/2hand/river_flows_in_you.mid
+    songNames:
+      - river flows in you
