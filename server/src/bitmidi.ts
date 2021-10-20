@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { Song } from "./types";
-import { parseMidiUrl } from "./songs.js";
+import { loadSong } from "./songs.js";
 
 const API = "https://bitmidi.com/api/midi/all";
 
@@ -39,7 +39,7 @@ export const getRandomBitMidiSong = async (
       .replace(/[-_\s]+/g, " ")
       .trim();
   return {
-    ...(await parseMidiUrl(new URL(result.downloadUrl, API).toString())),
+    ...(await loadSong(new URL(result.downloadUrl, API).toString())),
     songNames: [result.name, ...(result.alternateNames || [])].map(
       sanitiseName
     ),

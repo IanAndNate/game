@@ -49,3 +49,11 @@ export interface State {
   escapeCount: number;
   gameOverInfo?: GameOverInfo;
 }
+
+export interface NewGameOptions {
+  mode: GameMode;
+  maxKeys?: number;
+  botAccuracy?: number;
+  playlist?: string;
+  splitByTracks?: boolean;
+}

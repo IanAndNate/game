@@ -1,0 +1,11 @@
+name: Songs with left/right hand tracks
+songs:
+  - url: ./midi/playlists/2hand/HeartAndSoul.mid
+    songNames:
+      - heart and soul
+  - url: ./midi/playlists/2hand/tetris_2hands.mid
+    songNames:
+      - tetris
+  - url: ./midi/playlists/2hand/zelda.mid
+    songNames:
+      - zelda

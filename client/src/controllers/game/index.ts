@@ -1,5 +1,5 @@
 import { createHook, createStore } from "react-sweet-state";
-import { GameMode, GameStatus, State } from "./types";
+import { GameMode, GameStatus, NewGameOptions, State } from "./types";
 import * as actions from "./actions";
 import { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router";
@@ -23,12 +23,13 @@ export const useGame = createHook<State, Actions>(store);
 export const useCreateAndJoinRoom = () => {
   const history = useHistory();
   return useCallback(
-    async (
-      gameMode: GameMode,
-      maxKeys: number,
-      botAccuracy: number,
-      playlist?: string
-    ) => {
+    async ({
+      mode: gameMode,
+      maxKeys = -1,
+      botAccuracy = 1,
+      playlist,
+      splitByTracks = false,
+    }: NewGameOptions) => {
       const gameModeParams = {
         [GameMode.Standard]: {},
         [GameMode.BitMidi]: { bitmidi: "1" },
@@ -40,6 +41,7 @@ export const useCreateAndJoinRoom = () => {
           ...gameModeParams[gameMode],
           maxKeys: String(maxKeys),
           botAccuracy: String(botAccuracy),
+          splitByTracks: String(splitByTracks),
         }).toString()}`
       );
       const { roomId } = await roomIdResponse.json();

@@ -9,7 +9,7 @@ import {
 } from "unique-names-generator";
 import Midi from "@tonejs/midi";
 import { NoteJSON } from "@tonejs/midi/dist/Note";
-import { songsRouter, songs, parseMidiUrl } from "./songs.js";
+import { songsRouter, songs, loadSong } from "./songs.js";
 import { playlistRouter, playlists } from "./playlists.js";
 import { getRandomBitMidiSong } from "./bitmidi.js";
 import { Room, ServerPlayer, Song } from "./types";
@@ -22,6 +22,7 @@ import {
   GameOverInfo,
   GameOverPlayerRoundInfo,
   KeyPress,
+  Note,
 } from "../../client/src/shared/types";
 import { compareNotes, shuffle } from "./utils.js";
 
@@ -60,7 +61,7 @@ app.get("/new", async (req, res) => {
     enabledSongs = shuffle(playlist.songs.filter((s) => s.enabled));
   }
   if (req.query.url) {
-    const song = await parseMidiUrl(req.query.url as string);
+    const song = await loadSong(req.query.url as string);
     enabledSongs = [song];
   }
   if (enabledSongs.length === 0) {
@@ -74,6 +75,10 @@ app.get("/new", async (req, res) => {
   let botAccuracy = 1;
   if (req.query.botAccuracy) {
     botAccuracy = parseFloat(req.query.botAccuracy as string);
+  }
+  let splitByTracks = false;
+  if (req.query.splitByTracks) {
+    splitByTracks = req.query.splitByTracks === "true";
   }
   const newRoom: Room = {
     roomId,
@@ -89,6 +94,7 @@ app.get("/new", async (req, res) => {
     botTimers: [],
     maxKeys,
     botAccuracy,
+    splitByTracks,
   };
 
   rooms.push(newRoom);
@@ -385,15 +391,56 @@ const runBot = (bot: Player, round: RoundInfo, room: Room, accuracy = 0.9) => {
   });
 };
 
-const startNextRound = (room: Room) => {
-  // start a new round, clear stuff from previous round
-  room.currentRound += 1;
-  room.players.forEach((p) => {
-    p.notes = [];
-  });
-  room.botTimers.forEach(clearTimeout);
-  room.botTimers = [];
+const limitRange = (note: string): string => {
+  // HAX transpose any key <= C3 to an octave up
+  if (compareNotes(note, "C3") <= 0) {
+    const octave = parseInt(note.slice(-1), 10);
+    const x = `${note.slice(0, -1)}${Math.max(octave + 1, 3)}`;
+    return x;
+  }
+  return note;
+};
 
+const assignKeysByTracks = (room: Room) => {
+  const round = room.rounds[room.currentRound];
+  const { song } = round;
+  const validTracks = song.midiArray.tracks.filter((t) => t.notes.length > 0);
+  // delete all bots
+  room.players = room.players.filter((p) => !p.isBot);
+  const botsNeeded = validTracks.length - room.players.length;
+  if (botsNeeded > 0) {
+    room.players.push(...[...Array(botsNeeded)].map(createBot));
+  }
+  roomInfoBroadcast(room);
+  // randomly assign a track per player
+  shuffle(validTracks).forEach((track, idx) => {
+    room.players[idx].track = track;
+    room.players[idx].notes = track.notes.reduce<PlayerNote[]>(
+      (notes, note) => {
+        const transposedNote = limitRange(note.name);
+        return [
+          ...notes.filter((n) => n.note !== transposedNote),
+          {
+            key: "?",
+            note: transposedNote,
+          },
+        ];
+      },
+      []
+    );
+  });
+  // assign keys so that the notes are low to high
+  room.players.forEach((h) => {
+    h.notes = h.notes
+      .sort((a, b) => compareNotes(a.note, b.note))
+      .map((note, idx) => ({
+        note: note.note,
+        key: KEYBOARD_KEYS[idx],
+      }));
+  });
+};
+
+const assignKeysDefault = (room: Room) => {
   const round = room.rounds[room.currentRound];
   const { song } = round;
   const { uniqueNotes } = song;
@@ -444,19 +491,57 @@ const startNextRound = (room: Room) => {
         key: KEYBOARD_KEYS[idx],
       }));
   });
+};
+
+const assignKeys = (room: Room) => {
+  if (room.splitByTracks) {
+    assignKeysByTracks(room);
+    return;
+  }
+  assignKeysDefault(room);
+};
+
+const getSongNotesForPlayer = (
+  song: Song,
+  player: ServerPlayer,
+  splitByTracks: boolean
+): Note[] => {
+  if (splitByTracks) {
+    return player.track?.notes.map(({ name, time, duration }) => ({
+      key: player.notes.find((n) => n.note === limitRange(name))?.key,
+      time,
+      duration,
+    }));
+  }
+  return song.music.map(({ name, time, duration }) => {
+    const matched = player.notes.find((mapped) => mapped.note === name);
+    return { key: (matched && matched.key) || "", time, duration };
+  });
+};
+
+const startNextRound = (room: Room) => {
+  // start a new round, clear stuff from previous round
+  room.currentRound += 1;
+  room.players.forEach((p) => {
+    p.notes = [];
+  });
+  room.botTimers.forEach(clearTimeout);
+  room.botTimers = [];
+
+  const round = room.rounds[room.currentRound];
+  const { song } = round;
   const startTime = Date.now() + 10000;
   const totalDuration =
     Math.max(...song.music.map((note) => note.time + note.duration)) * 1000;
   round.startTime = startTime;
 
-  players.forEach((player) => {
+  assignKeys(room);
+
+  room.players.forEach((player) => {
     const roundInfo: RoundInfo = {
       speedFactor: round.speedFactor,
       notes: player.notes,
-      song: song.music.map(({ name, time, duration }) => {
-        const matched = player.notes.find((mapped) => mapped.note === name);
-        return { key: (matched && matched.key) || "", time, duration };
-      }),
+      song: getSongNotesForPlayer(song, player, room.splitByTracks),
       startTime,
       totalDuration,
       round: room.currentRound,
