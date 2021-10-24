@@ -1,5 +1,4 @@
 node_modules
-.gitignore
 .elasticbeanstalk/
 
 # Elastic Beanstalk Files
@@ -8,3 +7,4 @@ node_modules
 !.elasticbeanstalk/*.global.yml
 
 dist
+.midi-cache
