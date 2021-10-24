@@ -18,15 +18,13 @@ const Wrapper = styled.div`
 `;
 
 export const Lobby = () => {
-  const [
-    { players, keysDown },
-    { startNextRound, mouseDown, mouseUp, addBot },
-  ] = useGame();
+  const [{ players, keysDown }, { startRound, mouseDown, mouseUp, addBot }] =
+    useGame();
   const [speed, setSpeed] = useState<number>(1);
   useKeyboard(); // just for fun, let people play notes while waiting
   const start = useCallback(() => {
-    startNextRound({ speedFactor: 1 / speed });
-  }, [speed, startNextRound]);
+    startRound({ speedFactor: 1 / speed, round: 0 });
+  }, [speed, startRound]);
   const updateSpeed = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setSpeed(parseFloat(e.target.value));
   }, []);

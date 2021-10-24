@@ -20,8 +20,7 @@ const EXCLUDED_MIDI_FAMILIES = [
   "synth pad",
   "sound effects",
 ];
-export const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
-  const midiArray = new Midi.Midi(data);
+export const parseMidi = (fileName: string, midiArray: Midi.Midi): Song => {
   const notes = midiArray.tracks.reduce((acc, track) => {
     if (EXCLUDED_MIDI_FAMILIES.includes(track.instrument.family)) {
       return acc;
@@ -44,15 +43,33 @@ export const parseMidi = (fileName: string, data: ArrayBuffer): Song => {
   };
 };
 
+const CACHE_PATH = ".midi-cache";
+const fetchMidiWithCache = async (url: string): Promise<Midi.Midi> => {
+  if (!fs.existsSync(CACHE_PATH)) {
+    console.log(`Creating cache path ${CACHE_PATH}`);
+    fs.mkdirSync(CACHE_PATH, { recursive: true });
+  }
+  const cacheFileName = `${CACHE_PATH}/${url.replace(/[:\s\t\\/]+/g, "_")}`;
+  if (fs.existsSync(cacheFileName)) {
+    const buf = fs.readFileSync(cacheFileName);
+    const midi = new Midi.Midi(buf);
+    return midi;
+  }
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const data = await blob.arrayBuffer();
+  const midi = new Midi.Midi(data);
+  fs.writeFileSync(cacheFileName, Buffer.from(data));
+  return midi;
+};
+
 export const loadSong = async (urlOrFile: string): Promise<Song> => {
   if (urlOrFile.startsWith("http")) {
-    const response = await fetch(urlOrFile);
-    const blob = await response.blob();
-    const data = await blob.arrayBuffer();
-    return parseMidi(urlOrFile, data);
+    const midi = await fetchMidiWithCache(urlOrFile);
+    return parseMidi(urlOrFile, midi);
   }
   const data = fs.readFileSync(urlOrFile);
-  return parseMidi(urlOrFile, data);
+  return parseMidi(urlOrFile, new Midi.Midi(data));
 };
 
 // if a song fails to load, it is simply skipped
@@ -154,9 +171,9 @@ const postSongs: RequestHandler = (req, res, next) => {
       throw new Error('no song uploaded, try curl -F "song=@filename.mid"');
     }
     if (Array.isArray(song)) {
-      song.forEach((s) => addSong(parseMidi(s.name, s.data)));
+      song.forEach((s) => addSong(parseMidi(s.name, new Midi.Midi(s.data))));
     } else {
-      addSong(parseMidi(song.name, song.data));
+      addSong(parseMidi(song.name, new Midi.Midi(song.data)));
     }
     getSongs(req, res, next);
   } catch (err) {
