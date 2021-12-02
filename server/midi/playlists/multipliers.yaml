@@ -1,0 +1,55 @@
+name: Multipliers
+instructions: "Please guess which person chose this song! Options are [ Ian, Ivy, Mila, Nate, Vadim, Yanyan ]. You only have ONE guess!"
+maxGuesses: 1
+songs:
+  - url: ./midi/playlists/multipliers/emperor_quartet.mid
+    songNames:
+      - yanyan
+  - url: ./midi/playlists/multipliers/uptown_funk.mid
+    songNames:
+      - Uptown Funk by Bruno Mars
+      - yanyan
+  - url: ./midi/playlists/multipliers/gogo_bts.mid
+    songNames:
+      - Go Go by BTS
+      - ivy
+  - url: ./midi/playlists/multipliers/havana.mid
+    songNames:
+      - Havana by Camilla Cabello
+      - ivy
+  - url: ./midi/playlists/multipliers/swan_lake.mid
+    songNames:
+      - Swan Lake by Tchaikovsky
+      - nate
+  - url: ./midi/playlists/multipliers/carmen_prelude.mid
+    songNames:
+      - Carmen Prelude by Bizet
+      - nate
+  - url: ./midi/playlists/multipliers/sunglasses_at_night.mid
+    songNames:
+      - Sunglasses at Night by Corey Heart
+      - vadim
+  - url: ./midi/playlists/multipliers/mr_brightside.mid
+    songNames:
+      - Mr Brightside by The Killers
+      - vadim
+  - url: ./midi/playlists/multipliers/little_city.mid
+    songNames:
+      - 小城大事 by Miriam Yeung
+      - ian
+  - url: https://bitmidi.com/uploads/97737.mid
+    songNames:
+      - Suddenly Seymour from Little Shop of horrors
+      - ian
+  - url: ./midi/playlists/multipliers/barbie_girl.mid
+    songNames:
+      - Barbie Girl by Aqua
+      - mila
+  - url: ./midi/playlists/multipliers/cotton_eye_joe.mid
+    songNames:
+      - Cotton Eye Joe by Rednex
+      - mila
+  # - url: ./midi/playlists/multipliers/ppap.mid
+  #   songNames:
+  #     - PPAP by Pikotaro
+  #     - mila

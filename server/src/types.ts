@@ -56,6 +56,8 @@ export interface Room {
   maxKeys: number; // -1 = unlimited, otherwise add bots until all players have < maxKeys
   botAccuracy: number; // 1 = perfect, 0 = will not play any notes
   splitByTracks: boolean;
+  instructions: string;
+  maxGuesses: number;
 }
 
 export interface PlayListSong {
@@ -65,6 +67,8 @@ export interface PlayListSong {
 
 export interface PlayListSpec {
   name: string;
+  instructions?: string;
+  maxGuesses?: number;
   songs: PlayListSong[];
 }
 

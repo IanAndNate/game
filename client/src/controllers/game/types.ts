@@ -48,6 +48,8 @@ export interface State {
   guesses: Guess[];
   escapeCount: number;
   gameOverInfo?: GameOverInfo;
+  instructions: string;
+  maxGuesses: number;
 }
 
 export interface NewGameOptions {

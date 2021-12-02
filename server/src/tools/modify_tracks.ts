@@ -22,9 +22,9 @@ if (args.length === 0) {
   );
 }
 
-while (args.length && args[0].startsWith("--")) {
+while (args.length && args[0].startsWith("-")) {
   const flag = args.shift();
-  if (flag === "--remove-track") {
+  if (flag === "--remove-track" || flag === "-r") {
     filter.removeTracks.push(parseInt(args.shift(), 10));
   } else if (flag === "--start") {
     filter.start = parseFloat(args.shift());

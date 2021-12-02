@@ -13,6 +13,8 @@ const initialState: State = {
   timers: [],
   guesses: [],
   escapeCount: 0,
+  maxGuesses: 999,
+  instructions: "",
 };
 
 type Actions = typeof actions;

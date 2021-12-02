@@ -52,6 +52,8 @@ app.get("/new", async (req, res) => {
       return;
     }
   }
+  let maxGuesses = 999;
+  let instructions = "";
   if (req.query.playlist) {
     const playlist = playlists.find((p) => p.id === req.query.playlist);
     if (!playlist) {
@@ -59,6 +61,12 @@ app.get("/new", async (req, res) => {
       return;
     }
     enabledSongs = shuffle(playlist.songs.filter((s) => s.enabled));
+    if (playlist.spec.instructions) {
+      instructions = playlist.spec.instructions;
+    }
+    if (playlist.spec.maxGuesses) {
+      maxGuesses = playlist.spec.maxGuesses;
+    }
   }
   if (req.query.url) {
     const song = await loadSong(req.query.url as string);
@@ -80,7 +88,7 @@ app.get("/new", async (req, res) => {
   if (req.query.splitByTracks) {
     splitByTracks = req.query.splitByTracks === "true";
     if (maxKeys < 0) {
-      maxKeys = 10; // only use 1 row of the keyboard max
+      maxKeys = 30;
     }
   }
   const newRoom: Room = {
@@ -98,6 +106,8 @@ app.get("/new", async (req, res) => {
     maxKeys,
     botAccuracy,
     splitByTracks,
+    maxGuesses,
+    instructions,
   };
 
   rooms.push(newRoom);
@@ -113,6 +123,8 @@ const getRoomInfo = (room: Room, playerId?: string): RoomInfo => ({
     notes: undefined,
     isCurrent: p.id === playerId,
   })),
+  instructions: room.instructions,
+  maxGuesses: room.maxGuesses,
 });
 
 app.get("/rooms", (_req, res) => {
