@@ -1,5 +1,7 @@
 {
   "name": "Anthems",
+  "maxGuesses": 3,
+  "instructions": "Guess the country name for this national anthem.",
   "songs": [
     {
       "songNames": ["australia", "advance australia fair"],
@@ -32,6 +34,14 @@
     {
       "songNames": ["vietnam"],
       "url": "https://bitmidi.com/uploads/79491.mid"
+    },
+    {
+      "songNames": ["new zealand", "god defend new zealand"],
+      "url": "https://www.8notes.com/school/midi/piano/god_of_nations_PNO.mid"
+    },
+    {
+      "songNames": ["russia"],
+      "url": "https://www.8notes.com/school/midi/piano/national_anthem_russia.mid"
     }
   ]
 }

@@ -10,7 +10,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:staged": "eslint",
     "build": "tsc -b",
-    "start:watch": "(nodemon --watch 'src/**' --ext 'ts,json' --exec 'npm start') & (cd ../client && npm start)"
+    "start:watch": "(nodemon --watch 'src/**' --watch 'midi/**' --ext 'ts,json,yaml,mid' --exec 'npm start') & (cd ../client && npm start)"
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.27",

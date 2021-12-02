@@ -11,6 +11,10 @@ const Wrapper = styled.div`
   }
 `;
 
+const Instructions = styled.p`
+  font-style: italic;
+`;
+
 const Guesses = () => {
   const [{ guesses }] = useGame();
   return (
@@ -34,6 +38,8 @@ export const Guess = () => {
       currentRound,
       totalRounds,
       guesses,
+      maxGuesses,
+      instructions,
     },
     { startRound, makeGuess, endGame },
   ] = useGame();
@@ -79,14 +85,20 @@ export const Guess = () => {
           </>
         }
       />
+      {instructions !== "" && <Instructions>{instructions}</Instructions>}
       <form onSubmit={submitGuess}>
         <input
           placeholder="Enter a song title..."
           onChange={updateGuess}
           value={guess}
-          disabled={hasCorrect}
+          disabled={hasCorrect || guesses.length >= maxGuesses}
         />
       </form>
+      {maxGuesses < 999 && (
+        <p>
+          You have used {guesses.length} / {maxGuesses} guesses.
+        </p>
+      )}
       <Guesses />
       <button onClick={next} disabled={isReady}>
         {hasCorrect ? nextRoundLabel : `Pass (${nextRoundLabel})`}

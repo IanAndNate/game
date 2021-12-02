@@ -8,6 +8,13 @@ import {
 
 const RoundContainer = styled.div``;
 
+// HAX
+const Wrapper = styled.div`
+  height: 100vh;
+  width: calc(100% - 8px);
+  overflow: scroll;
+`;
+
 interface RoundProps extends GameOverRoundInfo {
   idx: number;
   roomId: string;
@@ -55,13 +62,13 @@ const Round = ({ idx, songNames, players, roomId }: RoundProps) => {
 export const GameOver = () => {
   const [{ gameOverInfo, roomId }] = useGame();
   return (
-    <>
+    <Wrapper>
       {gameOverInfo.rounds.map((r, idx) => (
         <Round key={idx} roomId={roomId} idx={idx} {...r} />
       ))}
       <div>
         <a href="/">back to home</a>
       </div>
-    </>
+    </Wrapper>
   );
 };

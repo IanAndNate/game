@@ -39,3 +39,7 @@ songs:
   - url: ./midi/playlists/2hand/rose.mid
     songNames:
       - the rose
+  - url: ./midi/playlists/2hand/country_roads.mid
+    songNames:
+      - country roads take me home
+      - country roads

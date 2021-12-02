@@ -30,6 +30,8 @@ export interface RoomInfo {
   players: Player[];
   currentRound: number;
   totalRounds: number;
+  instructions: string;
+  maxGuesses: number;
 }
 
 export interface NextRoundProps {
