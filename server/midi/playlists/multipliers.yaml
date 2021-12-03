@@ -1,5 +1,5 @@
 name: Multipliers
-instructions: "Please guess which person chose this song! Options are [ Ian, Ivy, Mila, Nate, Vadim, Yanyan ]. You only have ONE guess!"
+instructions: "Please guess which person chose this song! Options are [ Ian, Ivy, Jiamei, Michael, Mila, Nate, Vadim, Yanyan ]. You only have ONE guess!"
 maxGuesses: 1
 songs:
   - url: ./midi/playlists/multipliers/emperor_quartet.mid
@@ -37,7 +37,7 @@ songs:
     songNames:
       - 小城大事 by Miriam Yeung
       - ian
-  - url: https://bitmidi.com/uploads/97737.mid
+  - url: ./midi/playlists/multipliers/suddenly_seymour.mid
     songNames:
       - Suddenly Seymour from Little Shop of horrors
       - ian
@@ -49,7 +49,19 @@ songs:
     songNames:
       - Cotton Eye Joe by Rednex
       - mila
-  # - url: ./midi/playlists/multipliers/ppap.mid
-  #   songNames:
-  #     - PPAP by Pikotaro
-  #     - mila
+  - url: ./midi/playlists/multipliers/stay_by_my_side.mid
+    songNames:
+      - そばにいるね by 青山テルマ
+      - jiamei
+  - url: ./midi/playlists/multipliers/lady_gaga_the_cure.mid
+    songNames:
+      - The Cure by Lady Gaga
+      - jiamei
+  - url: ./midi/playlists/multipliers/blinding_lights.mid
+    songNames:
+      - Blinding Lights by The Weeknd
+      - michael
+  - url: ./midi/playlists/multipliers/pop_stars.mid
+    songNames:
+      - POP/STARS by The K/DA
+      - michael

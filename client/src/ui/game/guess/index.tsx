@@ -88,7 +88,7 @@ export const Guess = () => {
       {instructions !== "" && <Instructions>{instructions}</Instructions>}
       <form onSubmit={submitGuess}>
         <input
-          placeholder="Enter a song title..."
+          placeholder="Enter your guess..."
           onChange={updateGuess}
           value={guess}
           disabled={hasCorrect || guesses.length >= maxGuesses}
