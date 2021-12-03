@@ -4,6 +4,7 @@ maxGuesses: 1
 songs:
   - url: ./midi/playlists/multipliers/emperor_quartet.mid
     songNames:
+      - String Quartet No. 3 In C Major, Op.76, "Emperor" by Haydn
       - yanyan
   - url: ./midi/playlists/multipliers/uptown_funk.mid
     songNames:
@@ -63,5 +64,5 @@ songs:
       - michael
   - url: ./midi/playlists/multipliers/pop_stars.mid
     songNames:
-      - POP/STARS by The K/DA
+      - K/DA by POP/STARS
       - michael
